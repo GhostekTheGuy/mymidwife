@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Info } from "lucide-react"
+import { Info, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { dataManager } from "@/lib/data-manager"
 
 export function DemoBanner() {
   const [isOpen, setIsOpen] = useState(false)
@@ -17,6 +18,11 @@ export function DemoBanner() {
 
     return () => clearTimeout(timer)
   }, [])
+
+  const handleResetDemoData = () => {
+    dataManager.clearDemoData()
+    window.location.reload()
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -34,7 +40,15 @@ export function DemoBanner() {
               jest zapisywane i nie są wymagane żadne dane osobowe.
             </AlertDescription>
           </Alert>
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            <Button 
+              variant="outline" 
+              onClick={handleResetDemoData}
+              className="text-pink-600 border-pink-600 hover:bg-pink-50"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Resetuj dane demo
+            </Button>
             <Button onClick={() => setIsOpen(false)} className="bg-pink-600 hover:bg-pink-700 text-white">
               Rozumiem
             </Button>

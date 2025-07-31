@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
+  ArrowLeft,
+  ArrowRight,
   Plus,
   CalendarIcon,
   Heart,
@@ -23,35 +25,11 @@ import {
   Scale,
   Gauge,
   Thermometer,
+  Edit,
+  Save,
+  X,
 } from "lucide-react"
-import { dataManager } from "@/lib/data-manager"
-
-interface SymptomEntry {
-  id: string
-  date: string
-  symptoms: {
-    category: string
-    severity: number
-    emoji: string
-    label: string
-  }[]
-  mood: {
-    level: number
-    emoji: string
-    label: string
-  }
-  medicalData: {
-    weight?: number
-    bloodPressure?: {
-      systolic: number
-      diastolic: number
-    }
-    temperature?: number
-    heartRate?: number
-  }
-  notes: string
-  timestamp: Date
-}
+import { dataManager, type SymptomEntry } from "@/lib/data-manager"
 
 const SYMPTOM_CATEGORIES = [
   {
@@ -128,13 +106,7 @@ const SYMPTOM_CATEGORIES = [
   },
 ]
 
-const MOOD_OPTIONS = [
-  { emoji: "😄", label: "Bardzo dobry", level: 5 },
-  { emoji: "🙂", label: "Dobry", level: 4 },
-  { emoji: "😐", label: "Neutralny", level: 3 },
-  { emoji: "😔", label: "Słaby", level: 2 },
-  { emoji: "😢", label: "Bardzo słaby", level: 1 },
-]
+
 
 // Predefiniowane wartości dla szybkiego wyboru
 const WEIGHT_PRESETS = [55, 60, 65, 70, 75, 80, 85, 90]
@@ -149,9 +121,10 @@ export function ImprovedSymptomDiary() {
   const [entries, setEntries] = useState<SymptomEntry[]>([])
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [showAddEntry, setShowAddEntry] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null)
   const [currentEntry, setCurrentEntry] = useState<Partial<SymptomEntry>>({
     symptoms: [],
-    mood: { level: 3, emoji: "😐", label: "Neutralny" },
     medicalData: {},
     notes: "",
   })
@@ -159,22 +132,23 @@ export function ImprovedSymptomDiary() {
 
   useEffect(() => {
     loadEntries()
+    
+    // Nasłuchuj aktualizacji objawów
+    const handleSymptomsUpdate = () => loadEntries()
+    window.addEventListener("mymidwife:symptomsUpdated", handleSymptomsUpdate)
+    
+    return () => {
+      window.removeEventListener("mymidwife:symptomsUpdated", handleSymptomsUpdate)
+    }
   }, [])
 
   const loadEntries = () => {
-    const savedEntries = localStorage.getItem("symptom-diary-entries")
-    if (savedEntries) {
-      const parsed = JSON.parse(savedEntries).map((entry: any) => ({
-        ...entry,
-        timestamp: new Date(entry.timestamp),
-        medicalData: entry.medicalData || {},
-      }))
-      setEntries(parsed)
-    }
+    const savedEntries = dataManager.getSymptomEntries()
+    setEntries(savedEntries)
   }
 
   const saveEntries = (newEntries: SymptomEntry[]) => {
-    localStorage.setItem("symptom-diary-entries", JSON.stringify(newEntries))
+    dataManager.saveSymptomEntries(newEntries)
     setEntries(newEntries)
   }
 
@@ -190,17 +164,6 @@ export function ImprovedSymptomDiary() {
           label: option.label,
         },
       ],
-    }))
-  }
-
-  const handleMoodSelect = (mood: any) => {
-    setCurrentEntry((prev) => ({
-      ...prev,
-      mood: {
-        level: mood.level,
-        emoji: mood.emoji,
-        label: mood.label,
-      },
     }))
   }
 
@@ -233,36 +196,85 @@ export function ImprovedSymptomDiary() {
       medicalData: {
         ...prev.medicalData,
         bloodPressure: {
-          ...prev.medicalData?.bloodPressure,
-          [type]: numValue,
+          systolic: type === "systolic" ? numValue : (prev.medicalData?.bloodPressure?.systolic || 0),
+          diastolic: type === "diastolic" ? numValue : (prev.medicalData?.bloodPressure?.diastolic || 0),
         },
       },
     }))
   }
 
+  const handleEditEntry = (entry: SymptomEntry) => {
+    setIsEditing(true)
+    setEditingEntryId(entry.id)
+    setCurrentEntry({
+      symptoms: entry.symptoms,
+      medicalData: entry.medicalData,
+      notes: entry.notes,
+    })
+    setSelectedDate(new Date(entry.date))
+    setShowAddEntry(true)
+  }
+
   const handleSaveEntry = () => {
     if (!currentEntry.symptoms || currentEntry.symptoms.length === 0) return
 
-    const newEntry: SymptomEntry = {
-      id: dataManager.generateId(),
-      date: selectedDate.toISOString().split("T")[0],
-      symptoms: currentEntry.symptoms,
-      mood: currentEntry.mood || { level: 3, emoji: "😐", label: "Neutralny" },
-      medicalData: currentEntry.medicalData || {},
-      notes: currentEntry.notes || "",
-      timestamp: new Date(),
+    // Znajdź samopoczucie jako nastrój
+    const moodSymptom = currentEntry.symptoms.find(s => s.category === "Samopoczucie")
+    const mood = moodSymptom ? {
+      level: 6 - moodSymptom.severity, // Odwróć skale (severity 1 = level 5, etc.)
+      emoji: moodSymptom.emoji,
+      label: moodSymptom.label
+    } : { level: 3, emoji: "😐", label: "Neutralne" }
+
+    if (isEditing && editingEntryId) {
+      // Edycja istniejącego wpisu
+      const updatedEntry: SymptomEntry = {
+        id: editingEntryId,
+        date: selectedDate.toISOString().split("T")[0],
+        symptoms: currentEntry.symptoms,
+        mood: mood,
+        medicalData: currentEntry.medicalData || {},
+        notes: currentEntry.notes || "",
+        createdAt: entries.find(e => e.id === editingEntryId)?.createdAt || new Date().toISOString(),
+      }
+
+      dataManager.updateSymptomEntry(updatedEntry)
+    } else {
+      // Nowy wpis
+      const newEntry: SymptomEntry = {
+        id: dataManager.generateId(),
+        date: selectedDate.toISOString().split("T")[0],
+        symptoms: currentEntry.symptoms,
+        mood: mood,
+        medicalData: currentEntry.medicalData || {},
+        notes: currentEntry.notes || "",
+        createdAt: new Date().toISOString(),
+      }
+
+      dataManager.addSymptomEntry(newEntry)
     }
 
-    const updatedEntries = [...entries, newEntry]
-    saveEntries(updatedEntries)
+    loadEntries() // Przeładuj z dataManager
 
     // Reset form
     setCurrentEntry({
       symptoms: [],
-      mood: { level: 3, emoji: "😐", label: "Neutralny" },
       medicalData: {},
       notes: "",
     })
+    setIsEditing(false)
+    setEditingEntryId(null)
+    setShowAddEntry(false)
+  }
+
+  const handleCancelEdit = () => {
+    setCurrentEntry({
+      symptoms: [],
+      medicalData: {},
+      notes: "",
+    })
+    setIsEditing(false)
+    setEditingEntryId(null)
     setShowAddEntry(false)
   }
 
@@ -338,9 +350,11 @@ export function ImprovedSymptomDiary() {
               Dodaj wpis
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
             <DialogHeader>
-              <DialogTitle>Nowy wpis - {formatDate(selectedDate)}</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">
+                {isEditing ? "Edytuj wpis" : "Nowy wpis"} - {formatDate(selectedDate)}
+              </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-6">
@@ -351,7 +365,7 @@ export function ImprovedSymptomDiary() {
                   Pomiary medyczne
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {/* Weight Section */}
                   <div className="space-y-4">
                     <Label className="flex items-center gap-2 text-base font-medium">
@@ -378,7 +392,7 @@ export function ImprovedSymptomDiary() {
                     {/* Weight Presets */}
                     <div className="space-y-2">
                       <Label className="text-sm text-gray-600">Szybki wybór:</Label>
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {WEIGHT_PRESETS.map((weight) => (
                           <Button
                             key={weight}
@@ -422,7 +436,7 @@ export function ImprovedSymptomDiary() {
                     {/* Blood Pressure Presets */}
                     <div className="space-y-2">
                       <Label className="text-sm text-gray-600">Szybki wybór:</Label>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {BP_PRESETS.map((preset) => (
                           <Button
                             key={`${preset.systolic}-${preset.diastolic}`}
@@ -471,7 +485,7 @@ export function ImprovedSymptomDiary() {
                 </div>
 
                 {/* Additional Medical Data */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
                   {/* Temperature */}
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
@@ -518,7 +532,7 @@ export function ImprovedSymptomDiary() {
                       <IconComponent className={`w-5 h-5 ${category.color}`} />
                       <h3 className="font-semibold">{category.category}</h3>
                     </div>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                       {category.options.map((option) => (
                         <button
                           key={option.label}
@@ -538,30 +552,6 @@ export function ImprovedSymptomDiary() {
                 )
               })}
 
-              {/* Mood */}
-              <div className="space-y-3">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-red-500" />
-                  Nastrój
-                </h3>
-                <div className="grid grid-cols-5 gap-2">
-                  {MOOD_OPTIONS.map((mood) => (
-                    <button
-                      key={mood.label}
-                      onClick={() => handleMoodSelect(mood)}
-                      className={`p-3 rounded-lg border-2 transition-all text-center ${
-                        currentEntry.mood?.emoji === mood.emoji
-                          ? "border-pink-500 bg-pink-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="text-2xl mb-1">{mood.emoji}</div>
-                      <div className="text-xs font-medium">{mood.label}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Notes */}
               <div className="space-y-3">
                 <h3 className="font-semibold">Dodatkowe notatki</h3>
@@ -574,16 +564,26 @@ export function ImprovedSymptomDiary() {
               </div>
 
               {/* Save Button */}
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowAddEntry(false)}>
+              <div className="flex flex-col sm:flex-row justify-end gap-2">
+                <Button variant="outline" onClick={handleCancelEdit} className="w-full sm:w-auto">
                   Anuluj
                 </Button>
                 <Button
                   onClick={handleSaveEntry}
                   disabled={!currentEntry.symptoms || currentEntry.symptoms.length === 0}
-                  className="bg-pink-500 hover:bg-pink-600"
+                  className="bg-pink-500 hover:bg-pink-600 w-full sm:w-auto"
                 >
-                  Zapisz wpis
+                  {isEditing ? (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Zaktualizuj wpis
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Zapisz wpis
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -601,7 +601,7 @@ export function ImprovedSymptomDiary() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {latestMedicalData.weight && (
                 <div className="text-center p-3 bg-green-50 rounded-lg">
                   <Scale className="w-6 h-6 text-green-600 mx-auto mb-1" />
@@ -643,34 +643,14 @@ export function ImprovedSymptomDiary() {
       {/* Week Navigation */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5" />
-              Przegląd tygodnia
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setSelectedWeek((prev) => prev - 1)}>
-                ← Poprzedni
-              </Button>
-              {selectedWeek !== 0 && (
-                <Button variant="outline" size="sm" onClick={() => setSelectedWeek(0)}>
-                  Bieżący tydzień
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedWeek((prev) => prev + 1)}
-                disabled={selectedWeek >= 0}
-              >
-                Następny →
-              </Button>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarIcon className="w-5 h-5" />
+            Przegląd tygodnia
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {/* Week Calendar */}
-          <div className="grid grid-cols-7 gap-2 mb-6">
+          <div className="grid grid-cols-4 lg:grid-cols-7 gap-1 sm:gap-2 mb-4">
             {weekDates.map((date, index) => {
               const entry = getEntryForDate(date)
               const isToday = date.toDateString() === new Date().toDateString()
@@ -682,28 +662,31 @@ export function ImprovedSymptomDiary() {
                   key={index}
                   onClick={() => {
                     setSelectedDate(date)
-                    if (!hasEntry) {
+                    if (hasEntry && entry) {
+                      handleEditEntry(entry)
+                    } else {
                       setShowAddEntry(true)
                     }
                   }}
-                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all text-center ${
+                  className={`p-2 sm:p-3 rounded-lg border-2 cursor-pointer transition-all text-center ${
                     isToday
                       ? "border-pink-500 bg-pink-50"
                       : hasEntry
-                        ? "border-green-200 bg-green-50 hover:border-green-300"
+                        ? "border-green-200 bg-green-50 hover:border-green-300 hover:shadow-sm"
                         : "border-gray-200 hover:border-gray-300"
                   }`}
+                  title={hasEntry ? "Kliknij aby edytować wpis" : "Kliknij aby dodać wpis"}
                 >
                   <div className="text-xs font-medium text-gray-600 mb-1">{formatDayName(date)}</div>
-                  <div className="text-sm font-semibold mb-2">{date.getDate()}</div>
+                  <div className="text-sm sm:text-base font-semibold mb-1 sm:mb-2">{date.getDate()}</div>
 
                   {hasEntry ? (
                     <div className="space-y-1">
                       <div className="flex justify-center">
                         <CheckCircle2 className="w-4 h-4 text-green-500" />
                       </div>
-                      <div className="text-lg">{entry.mood.emoji}</div>
-                      <div className="text-xs text-gray-600">{entry.symptoms.length} objawów</div>
+                      <div className="text-base sm:text-lg">{entry.mood.emoji}</div>
+                      <div className="text-xs text-gray-600 hidden sm:block">{entry.symptoms.length} objawów</div>
                       {hasMedicalData && (
                         <div className="flex justify-center">
                           <Gauge className="w-3 h-3 text-blue-500" />
@@ -721,6 +704,31 @@ export function ImprovedSymptomDiary() {
                 </div>
               )
             })}
+          </div>
+
+          {/* Week Navigation */}
+          <div className="flex items-center justify-between mb-6">
+            <Button variant="outline" size="icon" onClick={() => setSelectedWeek((prev) => prev - 1)} className="transition-transform duration-200 ease-in-out hover:scale-110">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="flex-1 flex justify-center">
+              {selectedWeek !== 0 && (
+                <Button variant="outline" size="sm" onClick={() => setSelectedWeek(0)} className="px-4">
+                  Bieżący tydzień
+                </Button>
+              )}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSelectedWeek((prev) => prev + 1)}
+              disabled={selectedWeek >= 0}
+              className="transition-transform duration-200 ease-in-out hover:scale-110 disabled:opacity-50"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Weekly Summary */}
@@ -774,7 +782,7 @@ export function ImprovedSymptomDiary() {
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .slice(0, 5)
                 .map((entry) => (
-                  <div key={entry.id} className="flex items-start gap-4 p-4 border rounded-lg">
+                  <div key={entry.id} className="flex items-start gap-4 p-4 border rounded-lg hover:border-gray-300 transition-colors relative">
                     <div className="text-center">
                       <div className="text-2xl mb-1">{entry.mood.emoji}</div>
                       <div className="text-xs text-gray-600">
@@ -826,11 +834,25 @@ export function ImprovedSymptomDiary() {
                       {entry.notes && <p className="text-sm text-gray-600">{entry.notes}</p>}
                       <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
                         <Clock className="w-3 h-3" />
-                        {entry.timestamp.toLocaleTimeString("pl-PL", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {entry.createdAt 
+                          ? new Date(entry.createdAt).toLocaleTimeString("pl-PL", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "Brak daty"
+                        }
                       </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditEntry(entry)}
+                        className="p-2 h-8 w-8"
+                        title="Edytuj wpis"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
                     </div>
                   </div>
                 ))}

@@ -108,12 +108,65 @@ export function HealthTools() {
       </div>
 
       <Tabs defaultValue="bmi" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="bmi">Kalkulator BMI</TabsTrigger>
-          <TabsTrigger value="cycle">Cykl menstruacyjny</TabsTrigger>
-          <TabsTrigger value="reminders">Przypomnienia</TabsTrigger>
-          <TabsTrigger value="pregnancy">Kalkulator ciąży</TabsTrigger>
-        </TabsList>
+        {/* Mobile Navigation - 2x2 Grid */}
+        <div className="block sm:hidden">
+          <TabsList className="grid grid-cols-2 gap-2 bg-transparent p-0 h-auto">
+            <TabsTrigger 
+              value="bmi" 
+              className="data-[state=active]:bg-pink-500 data-[state=active]:text-white bg-gray-100 border data-[state=active]:border-pink-500 font-medium text-gray-600 hover:text-gray-900 transition-all duration-200 h-12 text-xs"
+            >
+              Kalkulator BMI
+            </TabsTrigger>
+            <TabsTrigger 
+              value="cycle" 
+              className="data-[state=active]:bg-pink-500 data-[state=active]:text-white bg-gray-100 border data-[state=active]:border-pink-500 font-medium text-gray-600 hover:text-gray-900 transition-all duration-200 h-12 text-xs"
+            >
+              Cykl menstruacyjny
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reminders" 
+              className="data-[state=active]:bg-pink-500 data-[state=active]:text-white bg-gray-100 border data-[state=active]:border-pink-500 font-medium text-gray-600 hover:text-gray-900 transition-all duration-200 h-12 text-xs"
+            >
+              Przypomnienia
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pregnancy" 
+              className="data-[state=active]:bg-pink-500 data-[state=active]:text-white bg-gray-100 border data-[state=active]:border-pink-500 font-medium text-gray-600 hover:text-gray-900 transition-all duration-200 h-12 text-xs"
+            >
+              Kalkulator ciąży
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Desktop Navigation - Single Row */}
+        <div className="hidden sm:block">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1 rounded-lg h-12">
+            <TabsTrigger 
+              value="bmi" 
+              className="data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-sm font-medium text-gray-600 hover:text-gray-900 transition-all duration-200"
+            >
+              Kalkulator BMI
+            </TabsTrigger>
+            <TabsTrigger 
+              value="cycle" 
+              className="data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-sm font-medium text-gray-600 hover:text-gray-900 transition-all duration-200"
+            >
+              Cykl menstruacyjny
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reminders" 
+              className="data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-sm font-medium text-gray-600 hover:text-gray-900 transition-all duration-200"
+            >
+              Przypomnienia
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pregnancy" 
+              className="data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-sm font-medium text-gray-600 hover:text-gray-900 transition-all duration-200"
+            >
+              Kalkulator ciąży
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="bmi">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

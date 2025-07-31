@@ -86,9 +86,11 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <NavigationBar />
-      <div className="flex-1 pt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <DemoBanner />
+      <div className="flex-1 pt-16">
+        <div className="py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <DemoBanner />
+          </div>
           <PatientDashboard />
         </div>
       </div>

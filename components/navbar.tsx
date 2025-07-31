@@ -57,15 +57,15 @@ export default function NavigationBar() {
           {/* ---------------------------------------------------------------- */}
           {/* Desktop search & filters                                        */}
           {/* ---------------------------------------------------------------- */}
-          <div className="mx-8 hidden max-w-5xl flex-1 items-center space-x-4 lg:flex">
+          <div className="mx-4 hidden flex-1 max-w-4xl items-center space-x-3 lg:flex">
             <CityAutocomplete
               value={cityQuery}
               onChange={setCityQuery}
               placeholder="Miasto lub kod pocztowy..."
-              className="h-10 flex-1 border-gray-200"
+              className="h-10 flex-1 min-w-[400px] border-gray-200"
             />
 
-            <Button className="h-10 bg-pink-500 px-6 text-white hover:bg-pink-600" onClick={handleSearch}>
+            <Button className="h-10 bg-pink-500 px-6 text-white hover:bg-pink-600 whitespace-nowrap" onClick={handleSearch}>
               <Search className="w-4 h-4 mr-2" />
               Znajdź położną
             </Button>
@@ -83,7 +83,7 @@ export default function NavigationBar() {
                     variant="ghost"
                     size="icon"
                     aria-label="Panel Pacjentki"
-                    className="h-10 w-10 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 rounded-lg bg-pink-300 shadow-inner"
+                    className="h-10 w-10 bg-pink-300 shadow-inner hover:bg-pink-500 rounded-lg transition-colors"
                   >
                     <LottieIcon />
                   </Button>
@@ -110,7 +110,7 @@ export default function NavigationBar() {
             {user && getDemoAccountType !== "guest" && (
               <Link href="/dashboard">
                 <button
-                  className="p-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 rounded-lg shadow-inner bg-stone-900"
+                  className="p-2 bg-pink-300 shadow-inner hover:bg-pink-500 rounded-lg transition-colors"
                   aria-label="Panel Pacjentki"
                 >
                   <div className="w-6 h-6 flex items-center justify-center">

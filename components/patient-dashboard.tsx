@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +11,7 @@ import { MessagesSystem } from "@/components/messages-system"
 import { ImprovedSymptomDiary } from "@/components/improved-symptom-diary"
 import { HealthTools } from "@/components/health-tools"
 import { EducationalContent } from "@/components/educational-content"
+import { dataManager } from "@/lib/data-manager"
 import {
   Calendar,
   MessageCircle,
@@ -56,9 +58,81 @@ interface QuickStat {
 }
 
 export function PatientDashboard() {
-  const [activeTab, setActiveTab] = useState("overview")
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "overview")
   const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [unreadMessages, setUnreadMessages] = useState(3)
+  const [unreadMessages, setUnreadMessages] = useState(0)
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
+    searchParams.get('conversationId')
+  )
+
+  // Funkcje pomocnicze do obliczania statystyk z danych dziennika
+  const getLatestMedicalData = () => {
+    const entries = dataManager.getSymptomEntries()
+    const entriesWithMedicalData = entries.filter(entry => 
+      entry.medicalData && Object.keys(entry.medicalData).length > 0
+    )
+    return entriesWithMedicalData.length > 0 ? entriesWithMedicalData[0].medicalData : {}
+  }
+
+  const getPreviousMedicalData = () => {
+    const entries = dataManager.getSymptomEntries()
+    const entriesWithMedicalData = entries.filter(entry => 
+      entry.medicalData && Object.keys(entry.medicalData).length > 0
+    )
+    return entriesWithMedicalData.length > 1 ? entriesWithMedicalData[1].medicalData : null
+  }
+
+  const calculateWeightChange = () => {
+    const latest = getLatestMedicalData()
+    const previous = getPreviousMedicalData()
+    
+    if (latest.weight && previous?.weight) {
+      const change = latest.weight - previous.weight
+      return {
+        value: change >= 0 ? `+${change.toFixed(1)} kg` : `${change.toFixed(1)} kg`,
+        trend: change > 0 ? "up" : change < 0 ? "down" : "stable"
+      }
+    }
+    return { value: "Brak danych", trend: "stable" }
+  }
+
+  const formatBloodPressure = (bp: any) => {
+    if (bp?.systolic && bp?.diastolic) {
+      return `${bp.systolic}/${bp.diastolic}`
+    }
+    return "Brak danych"
+  }
+
+  const getBloodPressureStatus = (bp: any) => {
+    if (!bp?.systolic || !bp?.diastolic) return "Brak danych"
+    
+    if (bp.systolic < 120 && bp.diastolic < 80) return "Normalne"
+    if (bp.systolic < 130 && bp.diastolic < 85) return "Lekko podwyższone"
+    if (bp.systolic < 140 && bp.diastolic < 90) return "Podwyższone"
+    return "Wysokie"
+  }
+
+  const latestMedicalData = getLatestMedicalData()
+  const weightChange = calculateWeightChange()
+
+  useEffect(() => {
+    // Ładuj prawdziwe dane o nieprzeczytanych wiadomościach
+    const updateUnreadCount = () => {
+      const count = dataManager.getTotalUnreadMessages()
+      setUnreadMessages(count)
+    }
+    
+    updateUnreadCount()
+    
+    // Nasłuchuj aktualizacji wiadomości
+    const handleMessagesUpdate = () => updateUnreadCount()
+    window.addEventListener("mymidwife:messagesUpdated", handleMessagesUpdate)
+    
+    return () => {
+      window.removeEventListener("mymidwife:messagesUpdated", handleMessagesUpdate)
+    }
+  }, [])
 
   useEffect(() => {
     // Mock data for appointments
@@ -90,7 +164,7 @@ export function PatientDashboard() {
 
   const quickStats: QuickStat[] = [
     {
-      label: "Tydzień ciąży",
+      label: "Tydzień ciąży", 
       value: "24",
       change: "+1 tydzień",
       trend: "up",
@@ -99,24 +173,24 @@ export function PatientDashboard() {
     },
     {
       label: "Waga",
-      value: "68.5 kg",
-      change: "+0.5 kg",
-      trend: "up",
+      value: latestMedicalData.weight ? `${latestMedicalData.weight} kg` : "Brak danych",
+      change: weightChange.value,
+      trend: weightChange.trend,
       icon: Scale,
       color: "text-blue-600",
     },
     {
-      label: "Ciśnienie",
-      value: "120/80",
-      change: "Normalne",
+      label: "Ciśnienie krwi",
+      value: formatBloodPressure(latestMedicalData.bloodPressure),
+      change: getBloodPressureStatus(latestMedicalData.bloodPressure),
       trend: "stable",
       icon: Heart,
       color: "text-green-600",
     },
     {
       label: "Temperatura",
-      value: "36.6°C",
-      change: "Normalna",
+      value: latestMedicalData.temperature ? `${latestMedicalData.temperature}°C` : "Brak danych",
+      change: latestMedicalData.temperature && latestMedicalData.temperature >= 36.5 && latestMedicalData.temperature <= 37.0 ? "Normalna" : latestMedicalData.temperature ? "Sprawdź" : "Brak danych",
       trend: "stable",
       icon: Thermometer,
       color: "text-orange-600",
@@ -153,7 +227,7 @@ export function PatientDashboard() {
   const navigationItems = [
     { id: "overview", label: "Przegląd", icon: Home },
     { id: "appointments", label: "Wizyty", icon: Calendar },
-    { id: "messages", label: "Wiadomości", icon: MessageCircle, badge: unreadMessages },
+    { id: "messages", label: "Wiadomości", icon: MessageCircle, badge: unreadMessages > 0 ? unreadMessages : undefined },
     { id: "diary", label: "Dziennik", icon: FileText },
     { id: "tools", label: "Narzędzia", icon: Calculator },
     { id: "education", label: "Wiedza", icon: BookOpen },
@@ -456,41 +530,17 @@ export function PatientDashboard() {
               <h2 className="text-xl sm:text-2xl font-bold">Wiadomości</h2>
               <p className="text-sm sm:text-base text-gray-600">Komunikuj się ze swoją położną</p>
             </div>
-            <div className="h-[500px] sm:h-[600px]">
-              <MessagesSystem />
+            <div className="h-[calc(96vh-200px)] min-h-[360px]">
+              <MessagesSystem preselectedConversationId={selectedConversationId} />
             </div>
           </div>
         )
       case "diary":
-        return (
-          <div className="space-y-4 sm:space-y-6">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold">Dziennik objawów</h2>
-              <p className="text-sm sm:text-base text-gray-600">Śledź swoje samopoczucie i objawy</p>
-            </div>
-            <ImprovedSymptomDiary />
-          </div>
-        )
+        return <ImprovedSymptomDiary />
       case "tools":
-        return (
-          <div className="space-y-4 sm:space-y-6">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold">Narzędzia zdrowotne</h2>
-              <p className="text-sm sm:text-base text-gray-600">Kalkulatory i narzędzia do monitorowania zdrowia</p>
-            </div>
-            <HealthTools />
-          </div>
-        )
+        return <HealthTools />
       case "education":
-        return (
-          <div className="space-y-4 sm:space-y-6">
-            <div>
-              <h2 className="text-xl sm:text-2xl font-bold">Centrum edukacyjne</h2>
-              <p className="text-sm sm:text-base text-gray-600">Artykuły i poradniki dla przyszłych mam</p>
-            </div>
-            <EducationalContent />
-          </div>
-        )
+        return <EducationalContent />
       default:
         return renderOverview()
     }
@@ -498,112 +548,76 @@ export function PatientDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col z-50">
-        <div className="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto z-50">
-          <div className="flex items-center flex-shrink-0 px-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center">
-                <Heart className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">MyMidwife</span>
-            </div>
-          </div>
-
-          <div className="mt-8 flex-grow flex flex-col">
-            <nav className="flex-1 px-2 space-y-1">
-              {navigationItems.map((item) => {
-                const IconComponent = item.icon
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full ${
-                      activeTab === item.id
-                        ? "bg-pink-100 text-pink-900"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
-                  >
-                    <IconComponent className="mr-3 h-5 w-5 flex-shrink-0" />
-                    {item.label}
-                    {item.badge && item.badge > 0 && (
-                      <Badge className="ml-auto bg-pink-500 text-white">{item.badge}</Badge>
-                    )}
-                  </button>
-                )
-              })}
-            </nav>
-
-            <div className="px-2 space-y-1">
-              {sidebarItems.map((item) => {
-                const IconComponent = item.icon
-                return (
-                  <button
-                    key={item.id}
-                    className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 w-full"
-                  >
-                    <IconComponent className="mr-3 h-5 w-5 flex-shrink-0" />
-                    {item.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Header */}
-      <div className="lg:hidden sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-pink-500 rounded flex items-center justify-center">
-              <Heart className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-lg font-bold text-gray-900">MyMidwife</span>
-          </div>
-
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64">
-              <div className="flex items-center gap-2 mb-8">
-                <div className="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-white" />
+      {/* Main Container with Grid System */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex">
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:top-16 lg:bottom-0 lg:left-0 xl:left-auto xl:static xl:top-auto xl:bottom-auto z-30">
+            <div className="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto xl:rounded-lg xl:shadow-sm xl:border xl:mt-6">
+              <div className="flex items-center flex-shrink-0 px-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center">
+                    <Heart className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-xl font-bold text-gray-900">MyMidwife</span>
                 </div>
-                <span className="text-xl font-bold text-gray-900">MyMidwife</span>
               </div>
 
-              <nav className="space-y-2">
-                {sidebarItems.map((item) => {
-                  const IconComponent = item.icon
-                  return (
-                    <button
-                      key={item.id}
-                      className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 w-full"
-                    >
-                      <IconComponent className="h-5 w-5" />
-                      {item.label}
-                    </button>
-                  )
-                })}
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
+              <div className="mt-8 flex-grow flex flex-col">
+                <nav className="flex-1 px-2 space-y-1">
+                  {navigationItems.map((item) => {
+                    const IconComponent = item.icon
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md w-full ${
+                          activeTab === item.id
+                            ? "bg-pink-100 text-pink-900"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        }`}
+                      >
+                        <IconComponent className="mr-3 h-5 w-5 flex-shrink-0" />
+                        {item.label}
+                        {item.badge && item.badge > 0 && (
+                          <Badge className="ml-auto bg-pink-500 text-white">{item.badge}</Badge>
+                        )}
+                      </button>
+                    )
+                  })}
+                </nav>
 
-      {/* Main Content */}
-      <div className="lg:pl-64 flex flex-col flex-1">
-        <main className="flex-1 pb-20 lg:pb-8">
-          <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">{renderContent()}</div>
-        </main>
+                <div className="px-2 space-y-1">
+                  {sidebarItems.map((item) => {
+                    const IconComponent = item.icon
+                    return (
+                      <button
+                        key={item.id}
+                        className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 w-full"
+                      >
+                        <IconComponent className="mr-3 h-5 w-5 flex-shrink-0" />
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 xl:ml-6">
+
+
+            <main className="pb-20 lg:pb-8 pt-6">
+              {renderContent()}
+            </main>
+          </div>
+        </div>
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-50">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-40">
         <div className="grid grid-cols-6 gap-1">
           {navigationItems.map((item) => {
             const IconComponent = item.icon
@@ -612,19 +626,19 @@ export function PatientDashboard() {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors relative ${
+                className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors relative ${
                   isActive ? "bg-pink-50 text-pink-600" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 }`}
+                title={item.label}
               >
                 <div className="relative">
-                  <IconComponent className="w-5 h-5" />
+                  <IconComponent className="w-6 h-6" />
                   {item.badge && item.badge > 0 && (
-                    <div className="absolute -top-2 -right-2 w-4 h-4 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center">
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center">
                       {item.badge}
                     </div>
                   )}
                 </div>
-                <span className="text-xs mt-1 font-medium truncate w-full text-center">{item.label}</span>
               </button>
             )
           })}

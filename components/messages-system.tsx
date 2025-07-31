@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Send, Paperclip, Search, File, Download, Check, CheckCheck, MessageCircle } from "lucide-react"
+import { Send, Paperclip, Search, File, Download, Check, CheckCheck, MessageCircle, ArrowLeft } from "lucide-react"
 import { dataManager, type Conversation, type Message } from "@/lib/data-manager"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function MessagesSystem({ preselectedConversationId }: { preselectedConversationId?: string | null }) {
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -16,9 +17,11 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
   const [newMessage, setNewMessage] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [showConversationList, setShowConversationList] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     const loadedConversations = dataManager.getConversations()
@@ -59,6 +62,19 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Na mobile pokazuj listę konwersacji gdy nie ma wybranej rozmowy
+  useEffect(() => {
+    if (isMobile) {
+      if (preselectedConversationId && selectedConversationId) {
+        // Jeśli jest preselected conversation, pokaż od razu konwersację
+        setShowConversationList(false)
+      } else if (!selectedConversationId) {
+        // Jeśli nie ma wybranej rozmowy, pokaż listę
+        setShowConversationList(true)
+      }
+    }
+  }, [isMobile, selectedConversationId, preselectedConversationId])
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -149,8 +165,12 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
   )
 
   return (
-    <div className="flex h-[600px] bg-white rounded-lg border overflow-hidden">
-      <div className="w-1/3 border-r flex flex-col">
+    <div className="flex h-full bg-white rounded-lg border overflow-hidden">
+      <div className={`${
+        isMobile 
+          ? (showConversationList ? 'w-full' : 'hidden') 
+          : 'w-1/3'
+      } border-r flex flex-col transition-all duration-300 ease-in-out`}>
         <div className="p-4 border-b">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -167,7 +187,12 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
           {filteredConversations.map((conversation) => (
             <div
               key={conversation.id}
-              onClick={() => setSelectedConversationId(conversation.id)}
+              onClick={() => {
+                setSelectedConversationId(conversation.id)
+                if (isMobile) {
+                  setShowConversationList(false)
+                }
+              }}
               className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
                 selectedConversationId === conversation.id ? "bg-pink-50 border-pink-200" : ""
               }`}
@@ -184,18 +209,24 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-semibold text-sm truncate">{conversation.midwifeName}</h3>
-                    <span className="text-xs text-gray-500">{formatTime(conversation.updatedAt)}</span>
+                    <div className="flex flex-col">
+                      <h3 className="font-semibold text-sm truncate">{conversation.midwifeName}</h3>
+                      <Badge variant="secondary" className="text-xs w-fit">
+                        Położna
+                      </Badge>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-xs text-gray-500">{formatTime(conversation.updatedAt)}</span>
+                      {conversation.unreadCount > 0 && (
+                        <Badge className="bg-pink-500 text-white text-xs">{conversation.unreadCount}</Badge>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 truncate">{conversation.lastMessage?.content || "..."}</p>
-                  <div className="flex items-center justify-between mt-1">
-                    <Badge variant="secondary" className="text-xs">
-                      Położna
-                    </Badge>
-                    {conversation.unreadCount > 0 && (
-                      <Badge className="bg-pink-500 text-white text-xs">{conversation.unreadCount}</Badge>
-                    )}
-                  </div>
+                  <p className="text-sm text-gray-600 line-clamp-2">
+                    {conversation.lastMessage?.content && conversation.lastMessage.content.length > 60
+                      ? `${conversation.lastMessage.content.substring(0, 60)}...`
+                      : conversation.lastMessage?.content || "..."}
+                  </p>
                 </div>
               </div>
             </div>
@@ -203,12 +234,26 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col">
+      <div className={`${
+        isMobile 
+          ? (showConversationList ? 'hidden' : 'w-full') 
+          : 'flex-1'
+      } flex flex-col transition-all duration-300 ease-in-out`}>
         {selectedConv ? (
           <>
             <div className="p-4 border-b bg-gray-50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                  {isMobile && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowConversationList(true)}
+                      className="p-2 hover:bg-gray-200 rounded-full"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                  )}
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={selectedConv.midwifeAvatar || "/placeholder.svg"} />
                     <AvatarFallback>
