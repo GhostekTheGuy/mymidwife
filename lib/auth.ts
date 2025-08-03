@@ -64,7 +64,7 @@ const DEMO_USERS = {
       workLocation: "Warszawa",
       specializations: [
         "Opieka prenatalna",
-        "Asystowanie przy porodzie",
+        "Poród prywatny",
         "Opieka poporodowa",
         "Edukacja przedporodowa",
         "Wsparcie w karmieniu piersią",

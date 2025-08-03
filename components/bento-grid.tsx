@@ -175,7 +175,7 @@ const NotificationsSkeleton = () => {
       </motion.div>
       <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-2">
         <div className="w-4 h-4 bg-blue-300 rounded-full"></div>
-        <div className="text-xs text-gray-600">Badania za 3 dni</div>
+        <div className="text-xs text-gray-600">Badania za ~3 dni</div>
       </div>
       <div className="text-xs text-gray-400">2 aktywne przypomnienia</div>
     </motion.div>
@@ -195,7 +195,7 @@ const HealthSkeleton = () => {
         <Heart className="absolute inset-0 m-auto w-6 h-6 text-pink-500" />
       </motion.div>
       <div className="text-xs text-gray-900 font-medium">Cykl: 28 dni</div>
-      <div className="text-xs text-gray-500 text-center">Następna owulacja za 12 dni</div>
+      <div className="text-xs text-gray-500 text-center">Następna owulacja za ~12 dni</div>
     </motion.div>
   )
 }

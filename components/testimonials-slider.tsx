@@ -15,7 +15,7 @@ const testimonials = [
     quote:
       "Aplikacja bardzo intuicyjna, a możliwość bezpośredniego kontaktu z położną to ogromne ułatwienie. Polecam każdej przyszłej mamie! System rezerwacji działa bez zarzutu.",
     name: "Magdalena Nowak",
-    title: "Kraków • Asystowanie przy porodzie",
+    title: "Kraków • Poród prywatny",
     image: "/placeholder.svg?height=48&width=48",
   },
   {

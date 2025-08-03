@@ -40,7 +40,7 @@ export function Footer() {
               </li>
               <li>
                 <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Asystowanie przy porodzie
+                  Poród prywatny
                 </a>
               </li>
               <li>

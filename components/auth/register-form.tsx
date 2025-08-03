@@ -50,7 +50,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
   const specializations = [
     "Opieka prenatalna",
-    "Asystowanie przy porodzie",
+            "Poród prywatny",
     "Opieka poporodowa",
     "Edukacja przedporodowa",
     "Konsultacje online",

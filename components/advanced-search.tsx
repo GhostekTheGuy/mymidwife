@@ -54,6 +54,9 @@ const mockMidwives = [
       "Opieka prenatalna",
       "Edukacja przedporodowa",
       "Prowadzenie ciąży fizjologicznej",
+      "Seksuologia - konsultacja seksuologiczna",
+      "Edukacja seksualna",
+      "Fizjoterapia uroginekologiczna",
     ],
     experience: 8,
     priceRange: "150-200 zł",
@@ -62,7 +65,7 @@ const mockMidwives = [
     verified: true,
     premium: true,
     responseTime: "15 min",
-    serviceTypes: ["Opieka prenatalna", "Porody domowe", "Wsparcie w karmieniu"],
+    consultationTypes: ["Online", "Gabinet", "W domu pacjentki"],
     minPrice: 150,
     maxPrice: 200,
   },
@@ -72,7 +75,7 @@ const mockMidwives = [
     location: "Kraków, Stare Miasto",
     rating: 4.8,
     reviews: 89,
-    services: ["Porody domowe", "Wsparcie w karmieniu", "Opieka poporodowa", "Chustonoszenie"],
+    services: ["Porody domowe", "Wsparcie w karmieniu", "Opieka poporodowa", "Chustonoszenie", "Opieka okołomenopauzalna", "Edukacja zdrowia intymnego"],
     experience: 12,
     priceRange: "180-250 zł",
     availability: getAvailabilityText(addDays(new Date(), 1)),
@@ -80,7 +83,7 @@ const mockMidwives = [
     verified: true,
     premium: false,
     responseTime: "30 min",
-    serviceTypes: ["Porody domowe", "Opieka poporodowa", "Konsultacje online"],
+    consultationTypes: ["Online", "Gabinet", "W domu pacjentki"],
     minPrice: 180,
     maxPrice: 250,
   },
@@ -90,7 +93,7 @@ const mockMidwives = [
     location: "Gdańsk, Wrzeszcz",
     rating: 4.7,
     reviews: 156,
-    services: ["Konsultacje online", "Edukacja przedporodowa", "Psychologia perinatalna", "CDL"],
+    services: ["Konsultacje online", "Edukacja przedporodowa", "Psychologia perinatalna", "CDL", "Wsparcie w okresie dojrzewania u nastolatek", "Edukacja seksualna"],
     experience: 6,
     priceRange: "120-180 zł",
     availability: getAvailabilityText(addDays(new Date(), 7)),
@@ -98,7 +101,7 @@ const mockMidwives = [
     verified: true,
     premium: true,
     responseTime: "45 min",
-    serviceTypes: ["Konsultacje online", "Edukacja przedporodowa", "Psychologia perinatalna"],
+    consultationTypes: ["Online", "Gabinet"],
     minPrice: 120,
     maxPrice: 180,
   },
@@ -113,6 +116,8 @@ const mockMidwives = [
       "Wsparcie w karmieniu",
       "Opieka prenatalna",
       "Prowadzenie ciąży fizjologicznej",
+      "Fizjoterapia uroginekologiczna",
+      "Opieka okołomenopauzalna",
     ],
     experience: 10,
     priceRange: "160-220 zł",
@@ -121,7 +126,7 @@ const mockMidwives = [
     verified: false,
     premium: false,
     responseTime: "60 min",
-    serviceTypes: ["Opieka nad wcześniakami", "Wsparcie w karmieniu", "Opieka prenatalna"],
+    consultationTypes: ["Gabinet", "W domu pacjentki"],
     minPrice: 160,
     maxPrice: 220,
   },
@@ -131,7 +136,7 @@ const mockMidwives = [
     location: "Poznań, Jeżyce",
     rating: 4.9,
     reviews: 201,
-    services: ["CDL", "Porody domowe", "Edukacja przedporodowa", "Chustonoszenie"],
+    services: ["CDL", "Porody domowe", "Edukacja przedporodowa", "Chustonoszenie", "Seksuologia - konsultacja seksuologiczna", "Edukacja zdrowia intymnego"],
     experience: 15,
     priceRange: "200-300 zł",
     availability: getAvailabilityText(new Date()),
@@ -139,7 +144,7 @@ const mockMidwives = [
     verified: true,
     premium: true,
     responseTime: "10 min",
-    serviceTypes: ["CDL", "Porody domowe", "Edukacja przedporodowa"],
+    consultationTypes: ["Online", "Gabinet", "W domu pacjentki"],
     minPrice: 200,
     maxPrice: 300,
   },
@@ -166,7 +171,7 @@ export function AdvancedSearch() {
   const [experienceRange, setExperienceRange] = useState([0, 20])
   const [priceRange, setPriceRange] = useState([0, 500])
   const [availability, setAvailability] = useState<string[]>([])
-  const [serviceType, setServiceType] = useState<string[]>([])
+  const [consultationType, setConsultationType] = useState<string[]>([])
   const [minRating, setMinRating] = useState(0)
   const [sortBy, setSortBy] = useState("rating")
   const [locationSearch, setLocationSearch] = useState("")
@@ -180,13 +185,13 @@ export function AdvancedSearch() {
     ...allUniqueServices.filter((s) => !preferredServicesOrder.includes(s)),
   ]
 
-  const allServiceTypes = Array.from(new Set(mockMidwives.flatMap((m) => m.serviceTypes)))
+  const allConsultationTypes = Array.from(new Set(mockMidwives.flatMap((m) => m.consultationTypes)))
 
   const availabilityOptions = [
-    getAvailabilityText(new Date()),
-    getAvailabilityText(addDays(new Date(), 1)),
-    getAvailabilityText(addDays(new Date(), 7)),
-    getAvailabilityText(addDays(new Date(), 2)),
+    { text: getAvailabilityText(new Date()), value: "today" },
+    { text: getAvailabilityText(addDays(new Date(), 1)), value: "tomorrow" },
+    { text: getAvailabilityText(addDays(new Date(), 7)), value: "next-week" },
+    { text: getAvailabilityText(addDays(new Date(), 2)), value: "day-after-tomorrow" },
   ]
 
   const activeFiltersCount =
@@ -194,7 +199,7 @@ export function AdvancedSearch() {
     (experienceRange[0] > 0 || experienceRange[1] < 20 ? 1 : 0) +
     (priceRange[0] > 0 || priceRange[1] < 500 ? 1 : 0) +
     availability.length +
-    serviceType.length +
+    consultationType.length +
     (minRating > 0 ? 1 : 0)
 
   const filteredMidwives = useMemo(() => {
@@ -220,10 +225,10 @@ export function AdvancedSearch() {
       if (midwife.minPrice > priceRange[1] || midwife.maxPrice < priceRange[0]) {
         return false
       }
-      if (availability.length > 0 && !availability.includes(midwife.availability)) {
+      if (availability.length > 0 && !availability.some(avail => midwife.availability.includes(avail))) {
         return false
       }
-      if (serviceType.length > 0 && !serviceType.some((type) => midwife.serviceTypes.includes(type))) {
+      if (consultationType.length > 0 && !consultationType.some((type) => midwife.consultationTypes.includes(type))) {
         return false
       }
       if (midwife.rating < minRating) {
@@ -255,7 +260,7 @@ export function AdvancedSearch() {
     experienceRange,
     priceRange,
     availability,
-    serviceType,
+    consultationType,
     minRating,
     sortBy,
   ])
@@ -265,7 +270,7 @@ export function AdvancedSearch() {
     setExperienceRange([0, 20])
     setPriceRange([0, 500])
     setAvailability([])
-    setServiceType([])
+    setConsultationType([])
     setMinRating(0)
   }
 
@@ -347,16 +352,16 @@ export function AdvancedSearch() {
         </div>
         <div className="space-y-2">
           {availabilityOptions.map((option) => (
-            <div key={option} className="flex items-center space-x-2">
+            <div key={option.value} className="flex items-center space-x-2">
               <Checkbox
-                id={option}
-                checked={availability.includes(option)}
+                id={option.value}
+                checked={availability.includes(option.text)}
                 onCheckedChange={(checked) => {
-                  setAvailability(checked ? [...availability, option] : availability.filter((a) => a !== option))
+                  setAvailability(checked ? [...availability, option.text] : availability.filter((a) => a !== option.text))
                 }}
               />
-              <Label htmlFor={option} className="text-sm">
-                {option}
+              <Label htmlFor={option.value} className="text-sm">
+                {option.text}
               </Label>
             </div>
           ))}
@@ -365,17 +370,17 @@ export function AdvancedSearch() {
 
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Heart className="w-4 h-4 text-red-500" />
-          <Label className="font-medium">Typ usługi</Label>
+          <Video className="w-4 h-4 text-blue-500" />
+          <Label className="font-medium">Sposób konsultacji</Label>
         </div>
         <div className="space-y-2">
-          {allServiceTypes.slice(0, 5).map((type) => (
+          {allConsultationTypes.map((type) => (
             <div key={type} className="flex items-center space-x-2">
               <Checkbox
                 id={type}
-                checked={serviceType.includes(type)}
+                checked={consultationType.includes(type)}
                 onCheckedChange={(checked) => {
-                  setServiceType(checked ? [...serviceType, type] : serviceType.filter((t) => t !== type))
+                  setConsultationType(checked ? [...consultationType, type] : consultationType.filter((t) => t !== type))
                 }}
               />
               <Label htmlFor={type} className="text-sm">

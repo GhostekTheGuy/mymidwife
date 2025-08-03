@@ -9,10 +9,12 @@ import NavigationBar from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { DemoBanner } from "@/components/demo-banner"
 import { useAuth } from "@/hooks/use-auth"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export default function DashboardPage() {
   const { user, switchAccount, getDemoAccountType } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     // Simulate loading
@@ -94,7 +96,7 @@ export default function DashboardPage() {
           <PatientDashboard />
         </div>
       </div>
-      <Footer />
+      {!isMobile && <Footer />}
     </div>
   )
 }

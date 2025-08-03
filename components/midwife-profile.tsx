@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import {
   MapPin,
   Phone,
   Mail,
   MessageCircle,
+  Calendar,
   Award,
   Shield,
   ArrowLeft,
@@ -92,6 +94,54 @@ const mockMidwives = {
         price: "120 zł",
         duration: "45 min",
         icon: Video,
+        isOnline: true,
+      },
+      {
+        name: "Seksuologia - konsultacja seksuologiczna",
+        description: "Profesjonalne konsultacje seksuologiczne z położną-seksuologiem",
+        price: "200 zł",
+        duration: "60 min",
+        icon: Heart,
+        isOnline: true,
+      },
+      {
+        name: "Edukacja seksualna",
+        description: "Edukacja w zakresie zdrowia seksualnego i intymnego",
+        price: "150 zł",
+        duration: "60 min",
+        icon: Baby,
+        isOnline: true,
+      },
+      {
+        name: "Fizjoterapia uroginekologiczna",
+        description: "Specjalistyczna fizjoterapia mięśni dna miednicy",
+        price: "180 zł",
+        duration: "45 min",
+        icon: Heart,
+        isOnline: false,
+      },
+      {
+        name: "Opieka okołomenopauzalna",
+        description: "Wsparcie i edukacja w okresie menopauzy",
+        price: "160 zł",
+        duration: "45 min",
+        icon: Heart,
+        isOnline: true,
+      },
+      {
+        name: "Edukacja zdrowia intymnego",
+        description: "Edukacja w zakresie zdrowia intymnego i higieny",
+        price: "140 zł",
+        duration: "45 min",
+        icon: Baby,
+        isOnline: true,
+      },
+      {
+        name: "Wsparcie w okresie dojrzewania",
+        description: "Wsparcie nastolatek w okresie dojrzewania",
+        price: "130 zł",
+        duration: "45 min",
+        icon: Baby,
         isOnline: true,
       },
     ],
@@ -553,12 +603,9 @@ export function MidwifeProfile({ midwifeId }: MidwifeProfileProps) {
                 return (
                   <div key={index} className="border rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src="/placeholder.svg?height=40&width=40" />
-                        <AvatarFallback>
-                          <IconComponent className="w-5 h-5" />
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                        <IconComponent className="w-5 h-5 text-pink-600" />
+                      </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <h3 className="font-semibold">{service.name}</h3>
@@ -691,32 +738,11 @@ export function MidwifeProfile({ midwifeId }: MidwifeProfileProps) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>GODZINY OTWARCIA</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {Object.entries(midwife.workingHours).map(([day, hours]) => (
-                  <div key={day} className="flex justify-between text-sm">
-                    <span className={day === "Dziś" ? "font-semibold" : ""}>{day}</span>
-                    <span className={hours === "Zamknięte" ? "text-gray-500" : "font-medium"}>{hours}</span>
-                  </div>
-                ))}
-              </div>
-              <Button
-                variant="link"
-                className="p-0 h-auto text-blue-500 mt-3"
-                onClick={() => setShowAllHours(!showAllHours)}
-              >
-                {showAllHours ? "Pokaż mniej" : "Pokaż więcej"}
-              </Button>
-            </CardContent>
-          </Card>
+
 
           <Card>
             <CardHeader>
-              <CardTitle>DANE BIZNESU</CardTitle>
+              <CardTitle>DANE KONTAKTOWE</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="text-sm font-medium">{midwife.name}</div>

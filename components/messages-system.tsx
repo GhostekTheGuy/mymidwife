@@ -276,96 +276,118 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
               className="flex-1 overflow-y-auto p-4 space-y-4"
               style={{ scrollBehavior: "smooth" }}
             >
-              {messages.map((message) => {
-                const isOwn = message.senderId === "demo-patient"
-                return (
-                  <div key={message.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[70%]`}>
-                      {!isOwn && (
-                        <div className="flex items-center gap-2 mb-1">
-                          <Avatar className="w-6 h-6">
-                            <AvatarImage src={message.senderAvatar || "/placeholder.svg"} />
-                            <AvatarFallback className="text-xs">
-                              {message.senderName
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs text-gray-600">{message.senderName}</span>
-                        </div>
-                      )}
-                      <div
-                        className={`rounded-lg p-3 ${isOwn ? "bg-pink-500 text-white" : "bg-gray-100 text-gray-900"}`}
-                      >
-                        <p className="text-sm">{message.content}</p>
-                        {message.attachments && message.attachments.length > 0 && (
-                          <div className="mt-2 space-y-2">
-                            {message.attachments.map((attachment) => (
-                              <a
-                                key={attachment.id}
-                                href={attachment.url}
-                                download={attachment.name}
-                                className={`flex items-center gap-2 p-2 rounded ${
-                                  isOwn ? "bg-pink-600" : "bg-gray-200"
-                                } hover:bg-pink-700/50`}
-                              >
-                                <File className="w-4 h-4" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium truncate">{attachment.name}</p>
-                                  <p className="text-xs opacity-75">{(attachment.size / 1024).toFixed(1)} KB</p>
-                                </div>
-                                <Download className="w-3 h-3" />
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div
-                        className={`flex items-center gap-1 mt-1 text-xs text-gray-500 ${
-                          isOwn ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        <span>{formatTime(message.timestamp)}</span>
-                        {isOwn && (
-                          <div className="flex">
-                            {message.isRead ? (
-                              <CheckCheck className="w-3 h-3 text-blue-500" />
-                            ) : (
-                              <Check className="w-3 h-3" />
-                            )}
-                          </div>
-                        )}
+              {messages.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="relative mb-6">
+                      <MessageCircle className="w-16 h-16 mx-auto text-gray-300 animate-pulse" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce"></div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-3">
-                    <Avatar className="w-6 h-6">
-                      <AvatarImage src={selectedConv.midwifeAvatar || "/placeholder.svg"} />
-                      <AvatarFallback className="text-xs">
-                        {selectedConv.midwifeName
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">Rozpocznij konwersację</h3>
+                    <p className="text-gray-500 mb-4">Napisz wiadomość, aby rozpocząć rozmowę z położną</p>
+                    <div className="flex gap-2 justify-center">
+                      <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                      <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                     </div>
                   </div>
                 </div>
+              ) : (
+                <>
+                  {messages.map((message) => {
+                    const isOwn = message.senderId === "demo-patient"
+                    return (
+                      <div key={message.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+                        <div className={`max-w-[70%]`}>
+                          {!isOwn && (
+                            <div className="flex items-center gap-2 mb-1">
+                              <Avatar className="w-6 h-6">
+                                <AvatarImage src={message.senderAvatar || "/placeholder.svg"} />
+                                <AvatarFallback className="text-xs">
+                                  {message.senderName
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs text-gray-600">{message.senderName}</span>
+                            </div>
+                          )}
+                          <div
+                            className={`rounded-lg p-3 ${isOwn ? "bg-pink-500 text-white" : "bg-gray-100 text-gray-900"}`}
+                          >
+                            <p className="text-sm">{message.content}</p>
+                            {message.attachments && message.attachments.length > 0 && (
+                              <div className="mt-2 space-y-2">
+                                {message.attachments.map((attachment) => (
+                                  <a
+                                    key={attachment.id}
+                                    href={attachment.url}
+                                    download={attachment.name}
+                                    className={`flex items-center gap-2 p-2 rounded ${
+                                      isOwn ? "bg-pink-600" : "bg-gray-200"
+                                    } hover:bg-pink-700/50`}
+                                  >
+                                    <File className="w-4 h-4" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-medium truncate">{attachment.name}</p>
+                                      <p className="text-xs opacity-75">{(attachment.size / 1024).toFixed(1)} KB</p>
+                                    </div>
+                                    <Download className="w-3 h-3" />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div
+                            className={`flex items-center gap-1 mt-1 text-xs text-gray-500 ${
+                              isOwn ? "justify-end" : "justify-start"
+                            }`}
+                          >
+                            <span>{formatTime(message.timestamp)}</span>
+                            {isOwn && (
+                              <div className="flex">
+                                {message.isRead ? (
+                                  <CheckCheck className="w-3 h-3 text-blue-500" />
+                                ) : (
+                                  <Check className="w-3 h-3" />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-3">
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={selectedConv.midwifeAvatar || "/placeholder.svg"} />
+                          <AvatarFallback className="text-xs">
+                            {selectedConv.midwifeName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.1s" }}
+                          ></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: "0.2s" }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
               <div ref={messagesEndRef} />
             </div>

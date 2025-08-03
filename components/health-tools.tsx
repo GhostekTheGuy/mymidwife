@@ -300,7 +300,7 @@ export function HealthTools() {
                       </div>
                       <p className="text-sm text-gray-600">
                         {formatDate(cycleInfo.nextPeriod)}
-                        <span className="ml-2 text-red-600">(za {getDaysUntil(cycleInfo.nextPeriod)} dni)</span>
+                        <span className="ml-2 text-red-600">(za ~{getDaysUntil(cycleInfo.nextPeriod)} dni)</span>
                       </p>
                     </div>
 
@@ -311,7 +311,7 @@ export function HealthTools() {
                       </div>
                       <p className="text-sm text-gray-600">
                         {formatDate(cycleInfo.ovulation)}
-                        <span className="ml-2 text-pink-600">(za {getDaysUntil(cycleInfo.ovulation)} dni)</span>
+                        <span className="ml-2 text-pink-600">(za ~{getDaysUntil(cycleInfo.ovulation)} dni)</span>
                       </p>
                     </div>
 
@@ -383,10 +383,10 @@ export function HealthTools() {
                         <Badge className="bg-red-100 text-red-800">Przeterminowane</Badge>
                       ) : getDaysUntil(new Date(reminder.date)) <= 7 ? (
                         <Badge className="bg-yellow-100 text-yellow-800">
-                          Za {getDaysUntil(new Date(reminder.date))} dni
+                          Za ~{getDaysUntil(new Date(reminder.date))} dni
                         </Badge>
                       ) : (
-                        <Badge variant="secondary">Za {getDaysUntil(new Date(reminder.date))} dni</Badge>
+                        <Badge variant="secondary">Za ~{getDaysUntil(new Date(reminder.date))} dni</Badge>
                       )}
                     </div>
                   </div>
@@ -489,7 +489,7 @@ function PregnancyCalculator() {
               <div className="p-3 bg-blue-50 rounded-lg">
                 <div className="font-medium text-blue-900">Przewidywany termin porodu</div>
                 <div className="text-blue-800">{formatDate(pregnancyInfo.dueDate)}</div>
-                <div className="text-sm text-blue-600">Za {pregnancyInfo.daysUntilDue} dni</div>
+                <div className="text-sm text-blue-600">Za ~{pregnancyInfo.daysUntilDue} dni</div>
               </div>
 
               <div className="p-3 bg-green-50 rounded-lg">
