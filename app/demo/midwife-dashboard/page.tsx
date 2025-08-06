@@ -1,11 +1,11 @@
 "use client"
-import React, { useState, useRef, useCallback } from "react"
+import React, { useState, useRef, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, Users, MessageCircle, Star, TrendingUp, ArrowLeft, Clock, MapPin, Settings, FileText, Plus, Edit, Camera, CheckCircle, XCircle, AlertCircle, User, Phone, Mail, CalendarDays, BookOpen, Image as ImageIcon, Heart, Bell, Home, ChevronRight, Stethoscope, Baby, Scale, Thermometer, Calculator, Video, Award, Upload, Eye, Move, Trash2, Search, ArrowUp, ArrowDown } from "lucide-react"
+import { Calendar, Users, MessageCircle, Star, TrendingUp, ArrowLeft, Clock, MapPin, Settings, FileText, Plus, Edit, Camera, CheckCircle, XCircle, AlertCircle, User, Phone, Mail, CalendarDays, BookOpen, ImageIcon, Heart, Bell, Home, ChevronRight, Stethoscope, Baby, Scale, Thermometer, Calculator, Video, Award, Upload, Eye, Move, Trash2, Search, ArrowUp, ArrowDown } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
@@ -24,12 +24,12 @@ import { midwifeDataManager } from "@/lib/midwife-data-manager"
 import { dataManager } from "@/lib/data-manager"
 import { CityAutocomplete } from "@/components/city-autocomplete"
 import { MidwifeCalendar } from "@/components/midwife-calendar"
-import { SlidersHorizontal } from "lucide-react"
+import { SlidersHorizontal } from 'lucide-react'
 
 // Import date utilities at the top
 import { formatDate, formatDateISO, formatRelativeTime, addDays } from "@/lib/date-utils"
 
-export default function MidwifeDemoPage() {
+function MidwifeDashboardContent() {
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "overview")
   const [showProfileEdit, setShowProfileEdit] = useState(false)
@@ -1438,7 +1438,7 @@ export default function MidwifeDemoPage() {
                           </div>
                         ) : (
                           <img 
-                            src={image.url} 
+                            src={image.url || "/placeholder.svg"} 
                             alt={image.name || 'Zdjęcie gabinetu'}
                             className="w-full h-full object-cover"
                           />
@@ -1855,7 +1855,7 @@ export default function MidwifeDemoPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <Avatar className="w-12 h-12">
-                <AvatarImage src={selectedPatient?.avatar} />
+                <AvatarImage src={selectedPatient?.avatar || "/placeholder.svg"} />
                 <AvatarFallback>
                   {selectedPatient?.name.split(" ").map((n: string) => n[0]).join("")}
                 </AvatarFallback>
@@ -1993,7 +1993,7 @@ export default function MidwifeDemoPage() {
                   </div>
                 ) : (
                   <img 
-                    src={selectedImage.url} 
+                    src={selectedImage.url || "/placeholder.svg"} 
                     alt={selectedImage.name || 'Zdjęcie gabinetu'}
                     className="w-full h-auto rounded-lg"
                   />
@@ -2067,7 +2067,7 @@ export default function MidwifeDemoPage() {
                       </div>
                     ) : (
                       <img 
-                        src={editingImage.url} 
+                        src={editingImage.url || "/placeholder.svg"} 
                         alt={editingImage.name || 'Zdjęcie gabinetu'}
                         className="w-full h-full object-cover"
                       />
@@ -2222,5 +2222,13 @@ function ServiceEditForm({ service, onSave, onCancel }: {
         </Button>
       </div>
     </form>
+  )
+}
+
+export default function MidwifeDemoPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MidwifeDashboardContent />
+    </Suspense>
   )
 }
