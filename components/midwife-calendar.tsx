@@ -10,22 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar, 
-  Clock, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  CheckCircle, 
-  XCircle,
-  AlertCircle,
-  User,
-  MapPin,
-  Video,
-  CalendarRange
-} from "lucide-react"
+import { ChevronLeft, ChevronRight, Calendar, Clock, Plus, Edit, Trash2, CheckCircle, XCircle, AlertCircle, User, MapPin, Video, CalendarRange } from 'lucide-react'
 import { generateTimeSlots, formatDate, isToday, isPastDate } from "@/lib/date-utils"
 import { midwifeDataManager, type MidwifeAvailability } from "@/lib/midwife-data-manager"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -351,63 +336,75 @@ export function MidwifeCalendar({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold">Kalendarz wizyt</h2>
-          <p className="text-sm sm:text-base text-gray-600">Zarządzaj swoją dostępnością i harmonogramem</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button 
-            className="bg-pink-500 hover:bg-pink-600"
-            onClick={handleAddAvailability}
-            disabled={!selectedDate}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Dodaj dostępność
-          </Button>
-          <Button 
-            variant="outline"
-            className="border-pink-500 text-pink-600 hover:bg-pink-50"
-            onClick={handleOpenMultiDayDialog}
-          >
-            <CalendarRange className="w-4 h-4 mr-2" />
-            Kilka dni naraz
-          </Button>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold">Kalendarz wizyt</h2>
+            <p className="text-sm text-gray-600">Zarządzaj swoją dostępnością i harmonogramem</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              className="bg-pink-500 hover:bg-pink-600 h-10 text-sm"
+              onClick={handleAddAvailability}
+              disabled={!selectedDate}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              {isMobile ? "Dodaj dostępność" : "Dodaj dostępność"}
+            </Button>
+            <Button 
+              variant="outline"
+              className="border-pink-500 text-pink-600 hover:bg-pink-50 h-10 text-sm"
+              onClick={handleOpenMultiDayDialog}
+            >
+              <CalendarRange className="w-4 h-4 mr-2" />
+              {isMobile ? "Kilka dni" : "Kilka dni naraz"}
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Calendar */}
       <Card>
-        <CardHeader>
+        <CardHeader className={isMobile ? "p-4 pb-2" : "p-6 pb-4"}>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <Calendar className="w-5 h-5" />
               {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
             </CardTitle>
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" onClick={() => navigateMonth("prev")}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigateMonth("prev")}
+                className={`${isMobile ? "h-8 w-8 p-0" : "h-9 px-3"}`}
+              >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigateMonth("next")}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigateMonth("next")}
+                className={`${isMobile ? "h-8 w-8 p-0" : "h-9 px-3"}`}
+              >
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent className={isMobile ? "p-3" : "p-6"}>
+        <CardContent className={isMobile ? "p-4 pt-2" : "p-6 pt-4"}>
           {/* Calendar Grid - Mobile Optimized */}
-          <div className={`grid grid-cols-7 gap-0.5 ${isMobile ? "mb-2" : "mb-4"}`}>
+          <div className={`grid grid-cols-7 ${isMobile ? "gap-0.5 mb-2" : "gap-1 mb-4"}`}>
             {DAYS.map((day) => (
-              <div key={day} className={`${isMobile ? "p-1" : "p-2"} text-center ${isMobile ? "text-xs" : "text-sm"} font-medium text-gray-500`}>
-                {isMobile ? day.substring(0, 2) : day}
+              <div key={day} className={`${isMobile ? "p-1 text-center" : "p-2 text-center"} ${isMobile ? "text-xs" : "text-sm"} font-medium text-gray-500`}>
+                {isMobile ? day.substring(0, 1) : day}
               </div>
             ))}
           </div>
 
-          <div className={`grid grid-cols-7 gap-0.5 ${isMobile ? "gap-1" : ""}`}>
+          <div className={`grid grid-cols-7 ${isMobile ? "gap-0.5" : "gap-1"}`}>
             {days.map((date, index) => {
               if (!date) {
-                return <div key={index} className={`${isMobile ? "p-1 h-12" : "p-2 h-20"}`} />
+                return <div key={index} className={`${isMobile ? "h-10" : "h-20"}`} />
               }
 
               const appointments = getAppointmentsForDate(date)
@@ -421,10 +418,10 @@ export function MidwifeCalendar({
                   key={index}
                   onClick={() => handleDateClick(date)}
                   disabled={isPast}
-                  className={`${isMobile ? "p-1 h-12" : "p-2 h-20"} border rounded-lg transition-all duration-200 ${
+                  className={`${isMobile ? "p-1 h-10 min-h-[40px]" : "p-2 h-20"} border rounded-lg transition-all duration-200 flex flex-col items-center justify-center ${
                     isPast
                       ? "opacity-50 cursor-not-allowed bg-gray-50"
-                      : "cursor-pointer hover:bg-pink-50 hover:border-pink-300 hover:shadow-sm"
+                      : "cursor-pointer hover:bg-pink-50 hover:border-pink-300 hover:shadow-sm active:bg-pink-100"
                   } ${isTodayDate && isCurrentMonth ? "bg-pink-100 border-pink-300" : "border-gray-200"} ${
                     !isCurrentMonth ? "opacity-30" : ""
                   }`}
@@ -437,18 +434,13 @@ export function MidwifeCalendar({
                     {date.getDate()}
                   </div>
                   {hasAppts && isCurrentMonth && !isPast && (
-                    <div className={`${isMobile ? "text-[10px]" : "text-xs"} text-blue-600 ${isMobile ? "mt-0.5" : "mt-1"}`}>
-                      {isMobile ? appointments.length : `${appointments.length} wizyt`}
+                    <div className={`${isMobile ? "text-[10px] leading-none" : "text-xs"} text-blue-600 ${isMobile ? "mt-0.5" : "mt-1"}`}>
+                      {isMobile ? `${appointments.length}` : `${appointments.length} wizyt`}
                     </div>
                   )}
-                  {isCurrentMonth && !isPast && !hasAppts && isMobile && (
-                    <div className="text-[10px] text-gray-500 mt-0.5">
-                      •
-                    </div>
-                  )}
-                  {isCurrentMonth && !isPast && !hasAppts && !isMobile && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Wolne
+                  {isCurrentMonth && !isPast && !hasAppts && (
+                    <div className={`${isMobile ? "text-[10px] leading-none" : "text-xs"} text-gray-400 ${isMobile ? "mt-0.5" : "mt-1"}`}>
+                      {isMobile ? "•" : "Wolne"}
                     </div>
                   )}
                 </button>
@@ -456,16 +448,17 @@ export function MidwifeCalendar({
             })}
           </div>
 
-          <div className="mt-4 flex items-center gap-4 text-xs text-gray-500">
-            <div className="flex items-center gap-2">
+          {/* Legend - Mobile Optimized */}
+          <div className={`${isMobile ? "mt-3" : "mt-4"} flex flex-wrap items-center gap-3 text-xs text-gray-500`}>
+            <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 bg-pink-100 border border-pink-300 rounded"></div>
               <span>Dziś</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
               <span>Wizyty</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 bg-gray-50 border border-gray-200 rounded"></div>
               <span>Wolne</span>
             </div>
@@ -475,187 +468,198 @@ export function MidwifeCalendar({
 
       {/* Appointments Dialog */}
       <Dialog open={showAppointmentsDialog} onOpenChange={setShowAppointmentsDialog}>
-        <DialogContent className={`${isMobile ? "max-w-[95vw] h-[90vh]" : "max-w-4xl max-h-[90vh]"} overflow-y-auto`}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className={`${isMobile ? "max-w-[95vw] max-h-[85vh] m-2" : "max-w-4xl max-h-[90vh]"} overflow-hidden flex flex-col`}>
+          <DialogHeader className={isMobile ? "p-4 pb-2" : "p-6 pb-4"}>
+            <DialogTitle className={`flex items-center gap-2 ${isMobile ? "text-lg" : "text-xl"}`}>
               <Calendar className="w-5 h-5" />
               {selectedDate && formatDate(new Date(selectedDate), {
-                weekday: "long",
+                weekday: isMobile ? "short" : "long",
                 day: "numeric",
-                month: "long",
+                month: isMobile ? "short" : "long",
                 year: "numeric",
               })}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6">
-            {/* Wizyty */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Wizyty ({selectedDate ? getAppointmentsForDate(new Date(selectedDate)).length : 0})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className={isMobile ? "p-3" : "p-6"}>
-                <div className={isMobile ? "space-y-2" : "space-y-3"}>
-                  {selectedDate && getAppointmentsForDate(new Date(selectedDate)).map((appointment) => (
-                    <div key={appointment.id} className={`${isMobile ? "p-3" : "p-4"} border rounded-lg`}>
-                      <div className={`flex ${isMobile ? "flex-col gap-2" : "items-center justify-between"} mb-2`}>
-                        <div className="flex items-center gap-2">
-                          <Badge className={`${getStatusColor(appointment.status)} ${isMobile ? "text-xs" : ""}`}>
-                            {getStatusIcon(appointment.status)}
-                            <span className={isMobile ? "ml-1" : ""}>
-                              {appointment.status === 'confirmed' && (isMobile ? 'Potw.' : 'Potwierdzona')}
-                              {appointment.status === 'pending' && (isMobile ? 'Oczek.' : 'Oczekująca')}
-                              {appointment.status === 'completed' && (isMobile ? 'Zak.' : 'Zakończona')}
-                              {appointment.status === 'cancelled' && (isMobile ? 'Anul.' : 'Anulowana')}
-                            </span>
-                          </Badge>
-                        </div>
-                        <div className={isMobile ? "text-left" : "text-right"}>
-                          <p className={`font-medium ${isMobile ? "text-sm" : ""}`}>{appointment.time} - {getEndTime(appointment.time, appointment.type)}</p>
-                          <p className="text-xs text-gray-500">
-                            {serviceTypes[appointment.type]?.description || '30 min'}
-                          </p>
-                          {appointment.week && (
-                            <p className="text-xs text-gray-500">{appointment.week}</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div>
-                          <p className="font-semibold">{appointment.patient}</p>
-                          <p className="text-sm text-gray-600">{appointment.type}</p>
+          <div className={`flex-1 overflow-y-auto ${isMobile ? "px-4 pb-4" : "px-6 pb-6"}`}>
+            <div className="space-y-4">
+              {/* Wizyty */}
+              <Card>
+                <CardHeader className={isMobile ? "p-3" : "p-4"}>
+                  <CardTitle className={`flex items-center gap-2 ${isMobile ? "text-base" : "text-lg"}`}>
+                    <User className="w-4 h-4" />
+                    Wizyty ({selectedDate ? getAppointmentsForDate(new Date(selectedDate)).length : 0})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className={isMobile ? "p-3 pt-0" : "p-4 pt-0"}>
+                  <div className="space-y-3">
+                    {selectedDate && getAppointmentsForDate(new Date(selectedDate)).map((appointment) => (
+                      <div key={appointment.id} className={`${isMobile ? "p-3" : "p-4"} border rounded-lg bg-white`}>
+                        <div className={`flex ${isMobile ? "flex-col gap-2" : "items-start justify-between"} mb-3`}>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge className={`${getStatusColor(appointment.status)} text-xs`}>
+                              {getStatusIcon(appointment.status)}
+                              <span className="ml-1">
+                                {appointment.status === 'confirmed' && 'Potwierdzona'}
+                                {appointment.status === 'pending' && 'Oczekująca'}
+                                {appointment.status === 'completed' && 'Zakończona'}
+                                {appointment.status === 'cancelled' && 'Anulowana'}
+                              </span>
+                            </Badge>
+                            {appointment.week && (
+                              <Badge variant="outline" className="text-xs">
+                                {appointment.week}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className={`${isMobile ? "text-left" : "text-right"}`}>
+                            <p className="font-medium text-sm">{appointment.time} - {getEndTime(appointment.time, appointment.type)}</p>
+                            <p className="text-xs text-gray-500">
+                              {serviceTypes[appointment.type]?.description || '30 min'}
+                            </p>
+                          </div>
                         </div>
                         
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          {appointment.isOnline ? (
-                            <div className="flex items-center gap-1">
-                              <Video className="w-4 h-4" />
-                              <span>Online</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              <span>{appointment.location || 'Gabinet'}</span>
-                            </div>
-                          )}
-                          {appointment.phone && (
-                            <div className="flex items-center gap-1">
-                              <User className="w-4 h-4" />
-                              <span>{appointment.phone}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {onAppointmentAction && (
-                          <div className={`flex ${isMobile ? "flex-col" : "flex-row"} gap-2 mt-3`}>
-                            {appointment.status === 'pending' && (
-                              <>
-                                <Button 
-                                  size={isMobile ? "sm" : "sm"}
-                                  onClick={() => onAppointmentAction(appointment.id, 'confirm')}
-                                  className={`bg-green-500 hover:bg-green-600 ${isMobile ? "w-full text-xs" : ""}`}
-                                >
-                                  {isMobile ? "Potwierdź" : "Potwierdź"}
-                                </Button>
-                                <Button 
-                                  size={isMobile ? "sm" : "sm"}
-                                  variant="outline"
-                                  onClick={() => onAppointmentAction(appointment.id, 'cancel')}
-                                  className={`text-red-600 border-red-300 hover:bg-red-50 ${isMobile ? "w-full text-xs" : ""}`}
-                                >
-                                  {isMobile ? "Anuluj" : "Anuluj"}
-                                </Button>
-                              </>
-                            )}
-                            <Button 
-                              size={isMobile ? "sm" : "sm"}
-                              variant="outline"
-                              onClick={() => onAppointmentAction(appointment.id, 'reschedule')}
-                              className={isMobile ? "w-full text-xs" : ""}
-                            >
-                              {isMobile ? "Przełóż" : "Przełóż"}
-                            </Button>
+                        <div className="space-y-2">
+                          <div>
+                            <p className="font-semibold text-sm">{appointment.patient}</p>
+                            <p className="text-sm text-gray-600">{appointment.type}</p>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {selectedDate && getAppointmentsForDate(new Date(selectedDate)).length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Brak wizyt w tym dniu</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                          
+                          <div className={`flex ${isMobile ? "flex-col gap-1" : "items-center gap-4"} text-xs text-gray-600`}>
+                            {appointment.isOnline ? (
+                              <div className="flex items-center gap-1">
+                                <Video className="w-3 h-3" />
+                                <span>Online</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                <span>{appointment.location || 'Gabinet'}</span>
+                              </div>
+                            )}
+                            {appointment.phone && (
+                              <div className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                <span>{appointment.phone}</span>
+                              </div>
+                            )}
+                          </div>
 
-            {/* Dostępność */}
-            <Card>
-              <CardHeader className={isMobile ? "p-3" : ""}>
-                <div className={`flex ${isMobile ? "flex-col gap-2" : "items-center justify-between"}`}>
-                  <CardTitle className={`flex items-center gap-2 ${isMobile ? "text-base" : ""}`}>
-                    <Clock className="w-5 h-5" />
-                    Dostępność
-                  </CardTitle>
-                  <Button size={isMobile ? "sm" : "sm"} onClick={handleAddAvailability} className={isMobile ? "w-full text-xs" : ""}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    {isMobile ? "Dodaj dostępność" : "Dodaj"}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className={isMobile ? "p-3" : ""}>
-                <div className={isMobile ? "space-y-2" : "space-y-3"}>
-                  {availabilitySlots.map((slot) => (
-                    <div key={slot.id} className={`flex ${isMobile ? "flex-col gap-2" : "items-center justify-between"} ${isMobile ? "p-2" : "p-3"} border rounded-lg`}>
-                      <div className={`flex items-center ${isMobile ? "justify-between" : "gap-3"}`}>
-                        <div className="text-center">
-                          <p className={`font-medium ${isMobile ? "text-sm" : ""}`}>{slot.time}</p>
-                          <p className="text-xs text-gray-500">
-                            {slot.currentBookings}/{slot.maxBookings} rezerwacji
-                          </p>
+                          {onAppointmentAction && (
+                            <div className={`flex ${isMobile ? "flex-col" : "flex-row"} gap-2 mt-3`}>
+                              {appointment.status === 'pending' && (
+                                <>
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => onAppointmentAction(appointment.id, 'confirm')}
+                                    className={`bg-green-500 hover:bg-green-600 text-xs h-8 ${isMobile ? "w-full" : ""}`}
+                                  >
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Potwierdź
+                                  </Button>
+                                  <Button 
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => onAppointmentAction(appointment.id, 'cancel')}
+                                    className={`text-red-600 border-red-300 hover:bg-red-50 text-xs h-8 ${isMobile ? "w-full" : ""}`}
+                                  >
+                                    <XCircle className="w-3 h-3 mr-1" />
+                                    Anuluj
+                                  </Button>
+                                </>
+                              )}
+                              <Button 
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onAppointmentAction(appointment.id, 'reschedule')}
+                                className={`text-xs h-8 ${isMobile ? "w-full" : ""}`}
+                              >
+                                <Clock className="w-3 h-3 mr-1" />
+                                Przełóż
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                        <Badge variant={slot.isAvailable ? "default" : "secondary"} className={isMobile ? "text-xs" : ""}>
-                          {slot.isAvailable ? (isMobile ? "Dostępne" : "Dostępne") : (isMobile ? "Niedostępne" : "Niedostępne")}
-                        </Badge>
                       </div>
-                      <div className={`flex gap-2 ${isMobile ? "w-full" : ""}`}>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditAvailability(slot)}
-                          className={isMobile ? "flex-1 text-xs" : ""}
-                        >
-                          <Edit className="w-4 h-4" />
-                          {isMobile && <span className="ml-1">Edytuj</span>}
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleDeleteAvailability(slot.id)}
-                          className={`text-red-600 border-red-300 hover:bg-red-50 ${isMobile ? "flex-1 text-xs" : ""}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          {isMobile && <span className="ml-1">Usuń</span>}
-                        </Button>
+                    ))}
+                    
+                    {selectedDate && getAppointmentsForDate(new Date(selectedDate)).length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p className="text-sm">Brak wizyt w tym dniu</p>
                       </div>
-                    </div>
-                  ))}
-                  
-                  {availabilitySlots.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Brak ustawionej dostępności</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dostępność */}
+              <Card>
+                <CardHeader className={isMobile ? "p-3" : "p-4"}>
+                  <div className={`flex ${isMobile ? "flex-col gap-2" : "items-center justify-between"}`}>
+                    <CardTitle className={`flex items-center gap-2 ${isMobile ? "text-base" : "text-lg"}`}>
+                      <Clock className="w-4 h-4" />
+                      Dostępność
+                    </CardTitle>
+                    <Button 
+                      size="sm" 
+                      onClick={handleAddAvailability} 
+                      className={`bg-pink-500 hover:bg-pink-600 text-xs h-8 ${isMobile ? "w-full" : ""}`}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Dodaj dostępność
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className={isMobile ? "p-3 pt-0" : "p-4 pt-0"}>
+                  <div className="space-y-3">
+                    {availabilitySlots.map((slot) => (
+                      <div key={slot.id} className={`flex ${isMobile ? "flex-col gap-2" : "items-center justify-between"} p-3 border rounded-lg bg-white`}>
+                        <div className={`flex items-center ${isMobile ? "justify-between" : "gap-3"}`}>
+                          <div className="text-center">
+                            <p className="font-medium text-sm">{slot.time}</p>
+                            <p className="text-xs text-gray-500">
+                              {slot.currentBookings}/{slot.maxBookings} rezerwacji
+                            </p>
+                          </div>
+                          <Badge variant={slot.isAvailable ? "default" : "secondary"} className="text-xs">
+                            {slot.isAvailable ? "Dostępne" : "Niedostępne"}
+                          </Badge>
+                        </div>
+                        <div className={`flex gap-2 ${isMobile ? "w-full" : ""}`}>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEditAvailability(slot)}
+                            className={`text-xs h-8 ${isMobile ? "flex-1" : ""}`}
+                          >
+                            <Edit className="w-3 h-3" />
+                            {isMobile && <span className="ml-1">Edytuj</span>}
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleDeleteAvailability(slot.id)}
+                            className={`text-red-600 border-red-300 hover:bg-red-50 text-xs h-8 ${isMobile ? "flex-1" : ""}`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            {isMobile && <span className="ml-1">Usuń</span>}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {availabilitySlots.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p className="text-sm">Brak ustawionej dostępności</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -679,12 +683,12 @@ export function MidwifeCalendar({
 
       {/* Multi-Day Availability Dialog */}
       <Dialog open={showMultiDayDialog} onOpenChange={setShowMultiDayDialog}>
-        <DialogContent className={`${isMobile ? "max-w-[95vw] h-[90vh]" : "max-w-2xl max-h-[90vh]"} overflow-hidden`}>
-          <DialogHeader className={isMobile ? "p-3" : ""}>
-            <DialogTitle className={isMobile ? "text-base" : ""}>Ustaw dostępność dla kilku dni</DialogTitle>
+        <DialogContent className={`${isMobile ? "max-w-[95vw] max-h-[90vh] m-2" : "max-w-2xl max-h-[90vh]"} overflow-hidden flex flex-col`}>
+          <DialogHeader className={isMobile ? "p-4 pb-2" : "p-6 pb-4"}>
+            <DialogTitle className={isMobile ? "text-lg" : "text-xl"}>Ustaw dostępność dla kilku dni</DialogTitle>
           </DialogHeader>
           
-          <div className={`overflow-y-auto ${isMobile ? "max-h-[calc(90vh-100px)] px-3" : "max-h-[calc(90vh-120px)] pr-2"}`}>
+          <div className={`flex-1 overflow-y-auto ${isMobile ? "px-4 pb-4" : "px-6 pb-6"}`}>
             <MultiDayAvailabilityForm
               onSave={handleSaveMultiDayAvailability}
               onCancel={() => setShowMultiDayDialog(false)}
@@ -1022,4 +1026,4 @@ function MultiDayAvailabilityForm({ onSave, onCancel, isMobile = false }: MultiD
       </div>
     </form>
   )
-} 
+}

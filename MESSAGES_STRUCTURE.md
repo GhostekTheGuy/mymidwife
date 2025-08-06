@@ -21,7 +21,7 @@ Rozdzielono strukturę wiadomości dla położnej i pacjentki na osobne stałe, 
 ## Stałe w kodzie
 
 ### MIDWIFE_CONVERSATIONS
-```typescript
+\`\`\`typescript
 const MIDWIFE_CONVERSATIONS: Conversation[] = [
   {
     id: uuidv4(),
@@ -32,10 +32,10 @@ const MIDWIFE_CONVERSATIONS: Conversation[] = [
     updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
   },
 ]
-```
+\`\`\`
 
 ### PATIENT_CONVERSATIONS
-```typescript
+\`\`\`typescript
 const PATIENT_CONVERSATIONS: Conversation[] = [
   {
     id: uuidv4(),
@@ -46,7 +46,7 @@ const PATIENT_CONVERSATIONS: Conversation[] = [
     updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
   },
 ]
-```
+\`\`\`
 
 ### MIDWIFE_MESSAGES
 - Wiadomości dla położnej z pacjentką Marią Nowak
@@ -60,20 +60,20 @@ const PATIENT_CONVERSATIONS: Conversation[] = [
 
 ## Logika wyboru danych
 
-```typescript
+\`\`\`typescript
 const isMidwife = storedUser ? JSON.parse(storedUser).role === "midwife" : false
 const conversations = isMidwife ? MIDWIFE_CONVERSATIONS : PATIENT_CONVERSATIONS
 const messages = isMidwife ? MIDWIFE_MESSAGES : PATIENT_MESSAGES
-```
+\`\`\`
 
 ## Logika wyświetlania wiadomości
 
 ### Rozpoznawanie własnych wiadomości
-```typescript
+\`\`\`typescript
 const isOwn = isMidwife() 
   ? (message.senderId === "demo-midwife" || message.senderId === "midwife-anna")
   : (message.senderId === "demo-patient" || message.senderId === "patient-maria")
-```
+\`\`\`
 
 ### Wyświetlanie nazwy nadawcy
 - **Własne wiadomości:** Nie wyświetla nazwy nadawcy (`{!isOwn && ...}`)
@@ -96,4 +96,4 @@ Użyj skryptu `test-messages.js` w konsoli przeglądarki, aby sprawdzić poprawn
 1. Wyczyść dane demo: `localStorage.clear()`
 2. Odśwież stronę
 3. Sprawdź czy wiadomości wyświetlają się poprawnie
-4. Uruchom skrypt testowy w konsoli 
+4. Uruchom skrypt testowy w konsoli
