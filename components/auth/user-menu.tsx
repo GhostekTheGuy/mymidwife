@@ -60,8 +60,23 @@ export function UserMenu() {
     window.location.reload()
   }
 
-  // Only use avatar image if user has a real avatar (not placeholder)
-  const hasRealAvatar = currentUser.avatar && !currentUser.avatar.includes("placeholder.svg")
+  // Always show avatar image if user has one
+  const hasRealAvatar = currentUser.avatar
+
+  // Określ odpowiedni link do dashboardu na podstawie roli
+  const getDashboardLink = () => {
+    if (currentUser.role === "midwife") {
+      return "/demo/midwife-dashboard"
+    }
+    return "/dashboard"
+  }
+
+  const getDashboardLabel = () => {
+    if (currentUser.role === "midwife") {
+      return "Panel Położnej"
+    }
+    return "Panel Pacjentki"
+  }
 
   return (
     <DropdownMenu>
@@ -73,7 +88,7 @@ export function UserMenu() {
           <Avatar className="h-10 w-10">
             {hasRealAvatar && (
               <AvatarImage
-                src={currentUser.avatar || "/placeholder.svg"}
+                src={currentUser.avatar || "/images/midwife-consultation.png"}
                 alt={`${currentUser.firstName} ${currentUser.lastName}`}
               />
             )}
@@ -104,9 +119,9 @@ export function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <a href="/dashboard" className="flex items-center gap-2">
+          <a href={getDashboardLink()} className="flex items-center gap-2">
             <User className="h-4 w-4" />
-            <span>Panel główny</span>
+            <span>{getDashboardLabel()}</span>
           </a>
         </DropdownMenuItem>
 

@@ -1,29 +1,71 @@
 // Utility functions for date handling
 export const formatDate = (date: Date, options?: Intl.DateTimeFormatOptions): string => {
+  // Sprawdź czy date jest poprawnym obiektem Date
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return "Nieprawidłowa data"
+  }
+
   const defaultOptions: Intl.DateTimeFormatOptions = {
     day: "numeric",
     month: "long",
     year: "numeric",
   }
 
-  return date.toLocaleDateString("pl-PL", { ...defaultOptions, ...options })
+  try {
+    return date.toLocaleDateString("pl-PL", { ...defaultOptions, ...options })
+  } catch (error) {
+    console.error("Błąd formatowania daty:", error)
+    return "Błąd formatowania"
+  }
+}
+
+export const formatDateISO = (date: Date): string => {
+  // Sprawdź czy date jest poprawnym obiektem Date
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return ""
+  }
+
+  try {
+    return date.toISOString().split('T')[0]
+  } catch (error) {
+    console.error("Błąd formatowania daty ISO:", error)
+    return ""
+  }
 }
 
 export const formatDateTime = (date: Date): string => {
-  return date.toLocaleDateString("pl-PL", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return "Nieprawidłowa data"
+  }
+
+  try {
+    return date.toLocaleDateString("pl-PL", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  } catch (error) {
+    console.error("Błąd formatowania daty i czasu:", error)
+    return "Błąd formatowania"
+  }
 }
 
 export const formatTime = (date: Date): string => {
-  return date.toLocaleTimeString("pl-PL", {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return "Nieprawidłowa data"
+  }
+
+  try {
+    return date.toLocaleTimeString("pl-PL", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  } catch (error) {
+    console.error("Błąd formatowania czasu:", error)
+    return "Błąd formatowania"
+  }
 }
 
 export const formatRelativeTime = (date: Date): string => {
@@ -68,6 +110,12 @@ export const isToday = (date: Date): boolean => {
   return date.toDateString() === today.toDateString()
 }
 
+export const isPastDate = (date: Date): boolean => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return date < today
+}
+
 export const isTomorrow = (date: Date): boolean => {
   const tomorrow = addDays(new Date(), 1)
   return date.toDateString() === tomorrow.toDateString()
@@ -87,7 +135,16 @@ export const isThisWeek = (date: Date): boolean => {
 }
 
 export const getWeekday = (date: Date): string => {
-  return date.toLocaleDateString("pl-PL", { weekday: "long" })
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return "Nieprawidłowa data"
+  }
+
+  try {
+    return date.toLocaleDateString("pl-PL", { weekday: "long" })
+  } catch (error) {
+    console.error("Błąd formatowania dnia tygodnia:", error)
+    return "Błąd formatowania"
+  }
 }
 
 export const getAvailabilityText = (date: Date): string => {

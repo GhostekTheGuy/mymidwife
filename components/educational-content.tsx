@@ -23,7 +23,11 @@ interface Article {
   featured: boolean
 }
 
-export function EducationalContent() {
+interface EducationalContentProps {
+  customArticles?: Article[]
+}
+
+export function EducationalContent({ customArticles = [] }: EducationalContentProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
 
@@ -47,7 +51,7 @@ export function EducationalContent() {
       author: "Dr Anna Kowalska",
       readTime: 8,
       publishDate: formatDateInput(addDays(new Date(), -5)),
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/images/nurse-checklist.jpg",
       featured: true,
     },
     {
@@ -59,7 +63,7 @@ export function EducationalContent() {
       author: "Mgr Magdalena Nowak",
       readTime: 6,
       publishDate: formatDateInput(addDays(new Date(), -7)),
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/images/nurse-checklist.jpg",
       featured: false,
     },
     {
@@ -71,7 +75,7 @@ export function EducationalContent() {
       author: "Położna Katarzyna Wiśniewska",
       readTime: 10,
       publishDate: formatDateInput(addDays(new Date(), -10)),
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/images/nurse-checklist.jpg",
       featured: true,
     },
     {
@@ -83,7 +87,7 @@ export function EducationalContent() {
       author: "Konsultantka laktacyjna Maria Zielińska",
       readTime: 12,
       publishDate: formatDateInput(addDays(new Date(), -12)),
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/images/nurse-checklist.jpg",
       featured: false,
     },
     {
@@ -94,7 +98,7 @@ export function EducationalContent() {
       author: "Psycholog Joanna Dąbrowska",
       readTime: 7,
       publishDate: formatDateInput(addDays(new Date(), -15)),
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/images/nurse-checklist.jpg",
       featured: false,
     },
     {
@@ -106,12 +110,15 @@ export function EducationalContent() {
       author: "Fizjoterapeutka Agnieszka Lewandowska",
       readTime: 9,
       publishDate: formatDateInput(addDays(new Date(), -20)),
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/images/nurse-checklist.jpg",
       featured: false,
     },
   ]
 
-  const filteredArticles = articles.filter((article) => {
+  // Łączymy domyślne artykuły z customowymi
+  const allArticles = [...articles, ...customArticles]
+
+  const filteredArticles = allArticles.filter((article) => {
     const matchesSearch =
       article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       article.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
@@ -119,7 +126,7 @@ export function EducationalContent() {
     return matchesSearch && matchesCategory
   })
 
-  const featuredArticles = articles.filter((article) => article.featured)
+  const featuredArticles = allArticles.filter((article) => article.featured)
 
   // Update formatDate function call
   const formatDate = (dateString: string) => {
@@ -186,9 +193,19 @@ export function EducationalContent() {
       </div>
 
       <Tabs defaultValue="all" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="all">Wszystkie artykuły</TabsTrigger>
-          <TabsTrigger value="featured">Polecane</TabsTrigger>
+        <TabsList className="bg-gray-100 p-1">
+          <TabsTrigger 
+            value="all" 
+            className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-900"
+          >
+            Wszystkie artykuły
+          </TabsTrigger>
+          <TabsTrigger 
+            value="featured"
+            className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-600 data-[state=inactive]:hover:text-gray-900"
+          >
+            Polecane
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all">
@@ -197,7 +214,7 @@ export function EducationalContent() {
               <Card key={article.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="aspect-video bg-gray-200 rounded-t-lg overflow-hidden">
                   <img
-                    src={article.image || "/placeholder.svg"}
+                                          src={article.image || "/images/nurse-checklist.jpg"}
                     alt={article.title}
                     className="w-full h-full object-cover"
                   />
@@ -245,7 +262,7 @@ export function EducationalContent() {
                     <div className="lg:w-1/3">
                       <div className="aspect-video lg:aspect-square bg-gray-200 rounded-lg overflow-hidden">
                         <img
-                          src={article.image || "/placeholder.svg"}
+                          src={article.image || "/images/nurse-checklist.jpg"}
                           alt={article.title}
                           className="w-full h-full object-cover"
                         />

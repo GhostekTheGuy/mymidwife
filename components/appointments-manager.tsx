@@ -176,7 +176,7 @@ export function AppointmentsManager() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
                     <Avatar className="w-12 h-12">
-                      <AvatarImage src={appointment.midwifeAvatar || "/placeholder.svg"} />
+                      <AvatarImage src={appointment.midwifeAvatar || "/images/pregnancy-support.png"} />
                       <AvatarFallback>{appointment.midwifeName.charAt(0)}</AvatarFallback>
                     </Avatar>
 

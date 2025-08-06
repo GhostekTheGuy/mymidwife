@@ -50,12 +50,7 @@ export function Footer() {
               </li>
               <li>
                 <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Konsultacje online
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                  Edukacja przedporodowa
+                  Edukacja przedporodowa ( szkoła rodzenia )
                 </a>
               </li>
               <li>

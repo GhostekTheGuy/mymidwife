@@ -34,9 +34,30 @@ import Link from "next/link"
 import { AppointmentBookingCalendar } from "./appointment-booking-calendar"
 import { dataManager } from "@/lib/data-manager"
 import { formatDate, addDays, getWorkingHours } from "@/lib/date-utils"
+import { midwifeDataManager } from "@/lib/midwife-data-manager"
 
 interface MidwifeProfileProps {
   midwifeId: string
+}
+
+// Service icon mapping
+const getServiceIcon = (serviceName: string) => {
+  const iconMap: { [key: string]: any } = {
+    "Opieka prenatalna": Heart,
+    "Porody domowe": Heart,
+    "Opieka poporodowa": Users,
+    "CDL - Ciągłość Opieki": Users,
+    "Edukacja przedporodowa ( szkoła rodzenia )": Baby,
+    "Seksuologia - konsultacja seksuologiczna": Heart,
+    "Edukacja seksualna": Baby,
+    "Fizjoterapia uroginekologiczna": Heart,
+    "Opieka okołomenopauzalna": Heart,
+    "Edukacja zdrowia intymnego": Baby,
+    "Wsparcie w okresie dojrzewania": Baby,
+    "Psychologia perinatalna": Heart,
+    "USG prenatalny": Stethoscope,
+  }
+  return iconMap[serviceName] || Heart
 }
 
 // Mock data for different midwives
@@ -60,6 +81,7 @@ const mockMidwives = {
       "/placeholder.svg?height=400&width=600&text=Gabinet+Anna+1",
       "/placeholder.svg?height=400&width=600&text=Gabinet+Anna+2",
       "/placeholder.svg?height=400&width=600&text=Sprzęt+medyczny+Anna",
+      "/images/nurse-checklist.jpg",
       "/placeholder.svg?height=400&width=600&text=Certyfikaty+Anna",
       "/placeholder.svg?height=400&width=600&text=Sala+konsultacyjna+Anna",
     ],
@@ -81,21 +103,14 @@ const mockMidwives = {
         isOnline: false,
       },
       {
-        name: "Edukacja przedporodowa",
+        name: "Edukacja przedporodowa ( szkoła rodzenia )",
         description: "Przygotowanie do porodu i rodzicielstwa w grupach lub indywidualnie",
         price: "150 zł",
         duration: "90 min",
         icon: Baby,
         isOnline: false,
       },
-      {
-        name: "Konsultacje online",
-        description: "Zdalne konsultacje przez video z możliwością udostępniania dokumentów",
-        price: "120 zł",
-        duration: "45 min",
-        icon: Video,
-        isOnline: true,
-      },
+
       {
         name: "Seksuologia - konsultacja seksuologiczna",
         description: "Profesjonalne konsultacje seksuologiczne z położną-seksuologiem",
@@ -176,6 +191,7 @@ const mockMidwives = {
     gallery: [
       "/placeholder.svg?height=400&width=600&text=Dom+Maria+1",
       "/placeholder.svg?height=400&width=600&text=Dom+Maria+2",
+      "/images/nurse-checklist.jpg",
       "/placeholder.svg?height=400&width=600&text=Sprzęt+Maria",
       "/placeholder.svg?height=400&width=600&text=Certyfikaty+Maria",
     ],
@@ -188,14 +204,7 @@ const mockMidwives = {
         icon: Heart,
         isOnline: false,
       },
-      {
-        name: "Wsparcie w karmieniu",
-        description: "Pomoc w nauce karmienia piersią i rozwiązywaniu problemów laktacyjnych",
-        price: "200 zł",
-        duration: "60 min",
-        icon: Baby,
-        isOnline: false,
-      },
+
       {
         name: "Opieka poporodowa",
         description: "Wsparcie w pierwszych tygodniach po porodzie",
@@ -204,14 +213,7 @@ const mockMidwives = {
         icon: Users,
         isOnline: false,
       },
-      {
-        name: "Konsultacje online",
-        description: "Zdalne porady dotyczące ciąży i karmienia",
-        price: "150 zł",
-        duration: "45 min",
-        icon: Video,
-        isOnline: true,
-      },
+
     ],
     workingHours: {
       Dziś: "9:00 - 17:00",
@@ -238,20 +240,14 @@ const mockMidwives = {
     gallery: [
       "/placeholder.svg?height=400&width=600&text=Gabinet+Katarzyna+1",
       "/placeholder.svg?height=400&width=600&text=USG+Katarzyna",
+      "/images/nurse-checklist.jpg",
       "/placeholder.svg?height=400&width=600&text=Konsultacje+Katarzyna",
       "/placeholder.svg?height=400&width=600&text=Certyfikaty+Katarzyna",
     ],
     services: [
+
       {
-        name: "Konsultacje online",
-        description: "Profesjonalne konsultacje przez platformy internetowe",
-        price: "120 zł",
-        duration: "45 min",
-        icon: Video,
-        isOnline: true,
-      },
-      {
-        name: "Edukacja przedporodowa",
+        name: "Edukacja przedporodowa ( szkoła rodzenia )",
         description: "Nowoczesne podejście do przygotowania na rodzicielstwo",
         price: "180 zł",
         duration: "90 min",
@@ -300,26 +296,13 @@ const mockMidwives = {
     gallery: [
       "/placeholder.svg?height=400&width=600&text=OIOM+Joanna",
       "/placeholder.svg?height=400&width=600&text=Inkubatory+Joanna",
+      "/images/nurse-checklist.jpg",
       "/placeholder.svg?height=400&width=600&text=Gabinet+Joanna",
       "/placeholder.svg?height=400&width=600&text=Certyfikaty+Joanna",
     ],
     services: [
-      {
-        name: "Opieka nad wcześniakami",
-        description: "Specjalistyczna opieka nad dziećmi urodzonymi przedwcześnie",
-        price: "300 zł",
-        duration: "90 min",
-        icon: Baby,
-        isOnline: false,
-      },
-      {
-        name: "Wsparcie w karmieniu",
-        description: "Pomoc w karmieniu dzieci z problemami ssania",
-        price: "220 zł",
-        duration: "75 min",
-        icon: Heart,
-        isOnline: false,
-      },
+
+
       {
         name: "Opieka prenatalna",
         description: "Kontrole ciąży wysokiego ryzyka",
@@ -362,6 +345,7 @@ const mockMidwives = {
     gallery: [
       "/placeholder.svg?height=400&width=600&text=Gabinet+Magdalena+1",
       "/placeholder.svg?height=400&width=600&text=Gabinet+Magdalena+2",
+      "/images/nurse-checklist.jpg",
       "/placeholder.svg?height=400&width=600&text=Sala+porodowa+Magdalena",
       "/placeholder.svg?height=400&width=600&text=Biblioteka+Magdalena",
       "/placeholder.svg?height=400&width=600&text=Dyplomy+Magdalena",
@@ -384,7 +368,7 @@ const mockMidwives = {
         isOnline: false,
       },
       {
-        name: "Edukacja przedporodowa",
+        name: "Edukacja przedporodowa ( szkoła rodzenia )",
         description: "Autorski program przygotowania do porodu i rodzicielstwa",
         price: "200 zł",
         duration: "120 min",
@@ -420,9 +404,26 @@ export function MidwifeProfile({ midwifeId }: MidwifeProfileProps) {
   const [showEmail, setShowEmail] = useState(false)
   const [showBookingCalendar, setShowBookingCalendar] = useState(false)
   const [selectedService, setSelectedService] = useState<any>(null)
+  const [midwife, setMidwife] = useState<any>(null)
 
-  // Get the specific midwife data based on ID
-  const midwife = mockMidwives[midwifeId as keyof typeof mockMidwives]
+  // Get the specific midwife data from data manager or fallback to mockMidwives
+  useEffect(() => {
+    const managedProfile = midwifeDataManager.getProfile(midwifeId)
+    if (managedProfile) {
+      setMidwife(managedProfile)
+    } else {
+      // Fallback to static data
+      const staticMidwife = mockMidwives[midwifeId as keyof typeof mockMidwives]
+      setMidwife(staticMidwife)
+    }
+
+    // Subscribe to profile updates
+    const unsubscribe = midwifeDataManager.subscribe(midwifeId, (updatedProfile) => {
+      setMidwife(updatedProfile)
+    })
+
+    return unsubscribe
+  }, [midwifeId])
 
   useEffect(() => {
     if (!midwife) return
@@ -472,7 +473,7 @@ export function MidwifeProfile({ midwifeId }: MidwifeProfileProps) {
       id: dataManager.generateId(),
       midwifeId: midwife.id,
       midwifeName: midwife.name,
-      midwifeAvatar: "/placeholder.svg?height=40&width=40",
+      midwifeAvatar: "/images/pregnancy-support.png",
       date,
       time,
       type: selectedService.name,
@@ -527,7 +528,7 @@ export function MidwifeProfile({ midwifeId }: MidwifeProfileProps) {
           <Card className="overflow-hidden">
             <div className="relative">
               <img
-                src={midwife.gallery[currentImageIndex] || "/placeholder.svg"}
+                src={midwife.gallery[currentImageIndex] || "/images/midwife-consultation.png"}
                 alt={`Zdjęcie ${currentImageIndex + 1}`}
                 className="w-full h-96 object-cover"
               />
@@ -598,7 +599,7 @@ export function MidwifeProfile({ midwifeId }: MidwifeProfileProps) {
             <CardContent className="space-y-4">
               <div className="text-sm text-gray-600 mb-4">Sugerowane usługi</div>
               {midwife.services.map((service, index) => {
-                const IconComponent = service.icon
+                const IconComponent = service.icon || getServiceIcon(service.name)
                 const isExpanded = expandedService.includes(index)
                 return (
                   <div key={index} className="border rounded-lg p-4">

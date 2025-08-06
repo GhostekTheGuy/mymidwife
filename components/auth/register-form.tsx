@@ -52,10 +52,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     "Opieka prenatalna",
             "Poród prywatny",
     "Opieka poporodowa",
-    "Edukacja przedporodowa",
-    "Konsultacje online",
-    "Wsparcie w karmieniu piersią",
-    "Opieka nad wcześniakami",
+    "Edukacja przedporodowa ( szkoła rodzenia )",
     "Planowanie rodziny",
   ]
 

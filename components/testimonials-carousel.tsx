@@ -25,7 +25,7 @@ const testimonials = [
     quote:
       "Dzienniczek objawów pomógł mi lepiej zrozumieć moje ciało. Położna mogła lepiej dostosować opiekę do moich potrzeb. To naprawdę zmienia sposób opieki medycznej.",
     name: "Joanna Kaczmarek",
-    title: "Wrocław • Edukacja przedporodowa",
+    title: "Wrocław • Edukacja przedporodowa ( szkoła rodzenia )",
   },
   {
     quote:

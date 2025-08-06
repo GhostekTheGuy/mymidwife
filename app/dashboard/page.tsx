@@ -10,11 +10,13 @@ import { Footer } from "@/components/footer"
 import { DemoBanner } from "@/components/demo-banner"
 import { useAuth } from "@/hooks/use-auth"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useRouter } from "next/navigation"
 
 export default function DashboardPage() {
-  const { user, switchAccount, getDemoAccountType } = useAuth()
+  const { user, switchAccount, getDemoAccountType, isMidwife } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const isMobile = useIsMobile()
+  const router = useRouter()
 
   useEffect(() => {
     // Simulate loading
@@ -24,6 +26,13 @@ export default function DashboardPage() {
 
     return () => clearTimeout(timer)
   }, [])
+
+  // Jeśli użytkownik jest położną, przekieruj do dashboardu położnej
+  useEffect(() => {
+    if (!isLoading && isMidwife()) {
+      router.push("/demo/midwife-dashboard")
+    }
+  }, [isLoading, isMidwife, router])
 
   if (isLoading) {
     return (
@@ -82,6 +91,18 @@ export default function DashboardPage() {
           </div>
         </div>
       </>
+    )
+  }
+
+  // Jeśli użytkownik jest położną, pokaż komunikat o przekierowaniu
+  if (isMidwife()) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Przekierowywanie do panelu położnej...</p>
+        </div>
+      </div>
     )
   }
 

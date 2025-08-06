@@ -139,6 +139,13 @@ const CONVERSATIONS_KEY = "mymidwife:conversations"
 const MESSAGES_KEY = "mymidwife:messages"
 const SYMPTOMS_KEY = "mymidwife:symptoms"
 
+// Wspólne klucze dla synchronizacji między rolami
+const SHARED_CONVERSATIONS_KEY = "mymidwife:shared-conversations"
+const SHARED_MESSAGES_KEY = "mymidwife:shared-messages"
+
+// Stałe ID dla konwersacji Anna Kowalska <-> Maria Nowak
+const ANNA_MARIA_CONVERSATION_ID = "conversation-anna-maria"
+
 // Event dispatcher for real-time updates
 function dispatchDataUpdate(type: "appointments" | "profile" | "messages" | "symptoms", data?: any) {
   if (typeof window !== "undefined") {
@@ -170,34 +177,105 @@ function getAppointments(): Appointment[] {
     return JSON.parse(stored)
   }
 
-  // Return default appointments
+  // Return default appointments for Anna Kowalska
   const defaultAppointments: Appointment[] = [
+    // Nadchodzące wizyty
     {
       id: uuidv4(),
-      midwifeId: "midwife-1",
-      midwifeName: "Anna Kowalska",
-      midwifeAvatar: "/placeholder.svg?height=40&width=40",
-      date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      midwifeId: "midwife-maria",
+      midwifeName: "Maria Nowak",
+      midwifeAvatar: "/images/pregnancy-support.png",
+      date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       time: "10:00",
       type: "Kontrola prenatalna",
       location: "Warszawa, ul. Marszałkowska 1",
       isOnline: false,
       status: "scheduled",
-      notes: "Rutynowa kontrola",
+      notes: "Rutynowa kontrola, 20 tydzień ciąży",
     },
     {
       id: uuidv4(),
-      midwifeId: "midwife-2",
-      midwifeName: "Magdalena Nowak",
-      midwifeAvatar: "/placeholder.svg?height=40&width=40",
+      midwifeId: "midwife-maria",
+      midwifeName: "Maria Nowak",
+      midwifeAvatar: "/images/pregnancy-support.png",
       date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       time: "14:30",
+      type: "USG morfologiczne",
+      location: "Centrum Diagnostyczne, ul. Nowy Świat 15",
+      isOnline: false,
+      status: "scheduled",
+      notes: "Badanie USG morfologiczne - 21 tydzień",
+    },
+    {
+      id: uuidv4(),
+      midwifeId: "midwife-maria",
+      midwifeName: "Maria Nowak",
+      midwifeAvatar: "/images/pregnancy-support.png",
+      date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      time: "16:00",
       type: "Edukacja przedporodowa",
       location: "Online",
       isOnline: true,
       status: "scheduled",
       meetingLink: "https://meet.google.com/abc-defg-hij",
-      notes: "Sesja edukacyjna online",
+      notes: "Sesja edukacyjna - przygotowanie do porodu",
+    },
+    
+    // Ukończone wizyty (historia)
+    {
+      id: uuidv4(),
+      midwifeId: "midwife-maria",
+      midwifeName: "Maria Nowak",
+      midwifeAvatar: "/images/pregnancy-support.png",
+      date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      time: "09:30",
+      type: "Pierwsza wizyta prenatalna",
+      location: "Warszawa, ul. Marszałkowska 1",
+      isOnline: false,
+      status: "completed",
+      notes: "Wywiad, badanie podstawowe, 16 tydzień ciąży. Wszystko w normie.",
+    },
+    {
+      id: uuidv4(),
+      midwifeId: "midwife-maria",
+      midwifeName: "Maria Nowak",
+      midwifeAvatar: "/images/pregnancy-support.png",
+      date: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      time: "11:00",
+      type: "Konsultacja przedciążowa",
+      location: "Warszawa, ul. Marszałkowska 1",
+      isOnline: false,
+      status: "completed",
+      notes: "Planowanie ciąży, badania, suplementacja",
+    },
+    {
+      id: uuidv4(),
+      midwifeId: "midwife-maria",
+      midwifeName: "Maria Nowak",
+      midwifeAvatar: "/images/pregnancy-support.png",
+      date: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      time: "15:00",
+      type: "Badania laboratoryjne",
+      location: "Online - omówienie wyników",
+      isOnline: true,
+      status: "completed",
+      meetingLink: "https://meet.google.com/results-review",
+      notes: "Omówienie wyników badań krwi i moczu - wszystko prawidłowe",
+    },
+
+    // Wizyta z inną położną (dla różnorodności)
+    {
+      id: uuidv4(),
+      midwifeId: "midwife-magdalena",
+      midwifeName: "Magdalena Wiśniewska",
+      midwifeAvatar: "/images/pregnancy-support.png",
+      date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      time: "12:30",
+      type: "Druga opinia",
+      location: "Kraków, ul. Floriańska 20",
+      isOnline: false,
+      status: "scheduled",
+      notes: "Konsultacja dodatkowa na prośbę pacjentki",
     },
   ]
 
@@ -238,63 +316,64 @@ function getUpcomingAppointments(): Appointment[] {
 function getConversations(): Conversation[] {
   if (typeof window === "undefined") return []
 
-  const stored = localStorage.getItem(CONVERSATIONS_KEY)
-  if (stored) {
-    return JSON.parse(stored)
+  // Pobierz informacje o użytkowniku
+  const storedUser = localStorage.getItem("mymidwife_user")
+  const isMidwife = storedUser ? JSON.parse(storedUser).role === "midwife" : false
+  const userName = storedUser ? JSON.parse(storedUser).name : ""
+
+  // Sprawdź czy istnieją już synchronizowane konwersacje
+  const sharedConversations = localStorage.getItem(SHARED_CONVERSATIONS_KEY)
+  const sharedMessages = localStorage.getItem(SHARED_MESSAGES_KEY)
+
+  if (sharedConversations && sharedMessages) {
+    const allMessages: Message[] = JSON.parse(sharedMessages)
+    const conversations: Conversation[] = JSON.parse(sharedConversations)
+
+    // Zwróć konwersacje odpowiednie dla aktualnej roli
+    return conversations.map(conv => {
+      const conversationMessages = allMessages.filter(msg => msg.conversationId === conv.id)
+      const lastMessage = conversationMessages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
+      
+      const unreadCount = conversationMessages.filter(msg => 
+        !msg.isRead && 
+        ((isMidwife && msg.senderId === "patient-anna") || 
+         (!isMidwife && msg.senderId === "midwife-maria"))
+      ).length
+
+      // Ustaw prawidłową nazwę i ID w zależności od aktualnej roli
+      const midwifeId = isMidwife ? "patient-anna" : "midwife-maria"
+      const midwifeName = isMidwife ? "Anna Kowalska" : "Maria Nowak"
+
+      return {
+        ...conv,
+        midwifeId,
+        midwifeName,
+        lastMessage,
+        unreadCount,
+        updatedAt: lastMessage ? lastMessage.timestamp : conv.updatedAt
+      }
+    })
   }
 
-  // Najpierw tworzymy konwersacje
-  const conv1Id = uuidv4()
-  const conv2Id = uuidv4()
-  const conv3Id = uuidv4()
-
-  const defaultConversations: Conversation[] = [
-    {
-      id: conv1Id,
-      midwifeId: "midwife-1",
-      midwifeName: "Anna Kowalska",
-      midwifeAvatar: "/placeholder.svg?height=32&width=32",
-      unreadCount: 2,
-      updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minut temu
-    },
-    {
-      id: conv2Id,
-      midwifeId: "midwife-2",
-      midwifeName: "Magdalena Nowak",
-      midwifeAvatar: "/placeholder.svg?height=32&width=32",
-      unreadCount: 0,
-      updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 godziny temu
-    },
-    {
-      id: conv3Id,
-      midwifeId: "midwife-3",
-      midwifeName: "Dr Katarzyna Wiśniewska",
-      midwifeAvatar: "/placeholder.svg?height=32&width=32",
-      unreadCount: 1,
-      updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // wczoraj
-    },
-  ]
-
-  // Tworzymy przykładowe wiadomości
+  // Jeśli nie ma wspólnych danych, zainicjalizuj je
   const defaultMessages: Message[] = [
-    // Konwersacja z Anną Kowalską (najnowsza)
     {
       id: uuidv4(),
-      conversationId: conv1Id,
-      senderId: "demo-patient",
-      senderName: "Ty",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
-      content: "Dzień dobry! Mam pytanie dotyczące badań prenaratalnych",
+      conversationId: ANNA_MARIA_CONVERSATION_ID,
+      senderId: "patient-anna",
+      senderName: "Anna Kowalska",
+      senderAvatar: "/images/pregnancy-support.png",
+      content: "Dzień dobry! Mam pytanie dotyczące badań prenatalnych",
       timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       type: "text",
       isRead: true,
     },
     {
       id: uuidv4(),
-      conversationId: conv1Id,
-      senderId: "midwife-1",
-      senderName: "Anna Kowalska",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
+      conversationId: ANNA_MARIA_CONVERSATION_ID,
+      senderId: "midwife-maria",
+      senderName: "Maria Nowak",
+      senderAvatar: "/images/pregnancy-support.png",
       content: "Dzień dobry! Oczywiście, chętnie odpowiem na Pani pytania. O które badania chodzi?",
       timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
       type: "text",
@@ -302,10 +381,10 @@ function getConversations(): Conversation[] {
     },
     {
       id: uuidv4(),
-      conversationId: conv1Id,
-      senderId: "demo-patient",
-      senderName: "Ty",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
+      conversationId: ANNA_MARIA_CONVERSATION_ID,
+      senderId: "patient-anna",
+      senderName: "Anna Kowalska",
+      senderAvatar: "/images/pregnancy-support.png",
       content: "Chodzi mi o USG morfologiczne. Kiedy najlepiej je wykonać?",
       timestamp: new Date(Date.now() - 75 * 60 * 1000).toISOString(),
       type: "text",
@@ -313,105 +392,44 @@ function getConversations(): Conversation[] {
     },
     {
       id: uuidv4(),
-      conversationId: conv1Id,
-      senderId: "midwife-1",
-      senderName: "Anna Kowalska",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
+      conversationId: ANNA_MARIA_CONVERSATION_ID,
+      senderId: "midwife-maria",
+      senderName: "Maria Nowak",
+      senderAvatar: "/images/pregnancy-support.png",
       content: "USG morfologiczne najlepiej wykonać między 18-22 tygodniem ciąży. To optymalne okno czasowe do oceny anatomii płodu. Czy może mi Pani powiedzieć, w którym tygodniu jest obecnie?",
       timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
       type: "text",
       isRead: false,
     },
-    {
-      id: uuidv4(),
-      conversationId: conv1Id,
-      senderId: "midwife-1",
-      senderName: "Anna Kowalska",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
-      content: "Przesyłam również link do artykułu o badaniach prenatalnych, który może być pomocny 📖",
-      timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      type: "text",
-      isRead: false,
-    },
+  ]
 
-    // Konwersacja z Magdaleną Nowak 
+  const defaultConversations: Conversation[] = [
     {
-      id: uuidv4(),
-      conversationId: conv2Id,
-      senderId: "demo-patient",
-      senderName: "Ty",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
-      content: "Dziękuję za wczorajszą sesję edukacyjną online! Było bardzo pouczające",
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      type: "text",
-      isRead: true,
-    },
-    {
-      id: uuidv4(),
-      conversationId: conv2Id,
-      senderId: "midwife-2",
-      senderName: "Magdalena Nowak",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
-      content: "Bardzo się cieszę, że sesja była pomocna! Jak idą ćwiczenia oddechowe, które omawiałyśmy?",
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      type: "text",
-      isRead: true,
-    },
-    {
-      id: uuidv4(),
-      conversationId: conv2Id,
-      senderId: "demo-patient",
-      senderName: "Ty",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
-      content: "Staram się ćwiczyć codziennie! Pomaga mi to się zrelaksować 😊",
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      type: "text",
-      isRead: true,
-    },
-
-    // Konwersacja z Dr Katarzyną Wiśniewską
-    {
-      id: uuidv4(),
-      conversationId: conv3Id,
-      senderId: "demo-patient",
-      senderName: "Ty",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
-      content: "Dzień dobry Pani Doktor. Czy mogłabym umówić wizytę kontrolną?",
-      timestamp: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
-      type: "text",
-      isRead: true,
-    },
-    {
-      id: uuidv4(),
-      conversationId: conv3Id,
-      senderId: "midwife-3",
-      senderName: "Dr Katarzyna Wiśniewska",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
-      content: "Dzień dobry! Oczywiście. Mam wolny termin w piątek o 14:00 lub w poniedziałek o 10:30. Który termin by Pani odpowiadał?",
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      type: "text",
-      isRead: false,
+      id: ANNA_MARIA_CONVERSATION_ID,
+      midwifeId: isMidwife ? "patient-anna" : "midwife-maria",
+      midwifeName: isMidwife ? "Anna Kowalska" : "Maria Nowak",
+      midwifeAvatar: "/images/pregnancy-support.png",
+      unreadCount: 0,
+      updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
     },
   ]
 
-  // Zapisujemy wiadomości
-  localStorage.setItem(MESSAGES_KEY, JSON.stringify(defaultMessages))
+  // Zapisz wspólne dane
+  localStorage.setItem(SHARED_MESSAGES_KEY, JSON.stringify(defaultMessages))
+  localStorage.setItem(SHARED_CONVERSATIONS_KEY, JSON.stringify(defaultConversations))
 
-  // Aktualizujemy konwersacje z ostatnimi wiadomościami
-  defaultConversations[0].lastMessage = defaultMessages.find(m => m.conversationId === conv1Id && m.timestamp === Math.max(...defaultMessages.filter(m => m.conversationId === conv1Id).map(m => new Date(m.timestamp).getTime())).toString())
-  defaultConversations[1].lastMessage = defaultMessages.find(m => m.conversationId === conv2Id && m.timestamp === Math.max(...defaultMessages.filter(m => m.conversationId === conv2Id).map(m => new Date(m.timestamp).getTime())).toString())
-  defaultConversations[2].lastMessage = defaultMessages.find(m => m.conversationId === conv3Id && m.timestamp === Math.max(...defaultMessages.filter(m => m.conversationId === conv3Id).map(m => new Date(m.timestamp).getTime())).toString())
+  // Aktualizuj konwersację z ostatnią wiadomością i licznikiem
+  const lastMessage = defaultMessages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
+  const unreadCount = defaultMessages.filter(msg => 
+    !msg.isRead && 
+    ((isMidwife && msg.senderId === "patient-anna") || 
+     (!isMidwife && msg.senderId === "midwife-maria"))
+  ).length
 
-  // Naprawiamy referencje do ostatnich wiadomości
-  const conv1Messages = defaultMessages.filter(m => m.conversationId === conv1Id).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-  const conv2Messages = defaultMessages.filter(m => m.conversationId === conv2Id).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-  const conv3Messages = defaultMessages.filter(m => m.conversationId === conv3Id).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  defaultConversations[0].lastMessage = lastMessage
+  defaultConversations[0].unreadCount = unreadCount
+  defaultConversations[0].updatedAt = lastMessage.timestamp
 
-  defaultConversations[0].lastMessage = conv1Messages[0]
-  defaultConversations[1].lastMessage = conv2Messages[0]
-  defaultConversations[2].lastMessage = conv3Messages[0]
-
-  saveConversations(defaultConversations)
   return defaultConversations
 }
 
@@ -424,7 +442,8 @@ function saveConversations(conversations: Conversation[]): void {
 function getMessages(conversationId: string): Message[] {
   if (typeof window === "undefined") return []
 
-  const stored = localStorage.getItem(MESSAGES_KEY)
+  // Używaj wspólnych wiadomości
+  const stored = localStorage.getItem(SHARED_MESSAGES_KEY)
   const allMessages: Message[] = stored ? JSON.parse(stored) : []
   return allMessages.filter((msg) => msg.conversationId === conversationId)
 }
@@ -432,54 +451,96 @@ function getMessages(conversationId: string): Message[] {
 function saveMessage(message: Message): void {
   if (typeof window === "undefined") return
 
-  const stored = localStorage.getItem(MESSAGES_KEY)
-  const messages: Message[] = stored ? JSON.parse(stored) : []
-  messages.push(message)
-  localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages))
-
-  // Update conversation
-  const conversations = getConversations()
-  const convIndex = conversations.findIndex((conv) => conv.id === message.conversationId)
-  if (convIndex !== -1) {
-    conversations[convIndex].lastMessage = message
-    conversations[convIndex].updatedAt = message.timestamp
-    
-    // Tylko zwiększ licznik nieprzeczytanych jeśli wiadomość nie jest od użytkownika i nie jest przeczytana
-    if (message.senderId !== "demo-patient" && !message.isRead) {
-      conversations[convIndex].unreadCount += 1
-    }
-    saveConversations(conversations)
+  // Pobierz aktualnego użytkownika dla określenia senderId
+  const storedUser = localStorage.getItem("mymidwife_user")
+  const isMidwife = storedUser ? JSON.parse(storedUser).role === "midwife" : false
+  
+  // Ustaw właściwy senderId na podstawie roli
+  const messageWithSender = {
+    ...message,
+    senderId: isMidwife ? "midwife-maria" : "patient-anna",
+    senderName: isMidwife ? "Maria Nowak" : "Anna Kowalska"
   }
 
-  dispatchDataUpdate("messages", message)
+  // Zapisz do wspólnych wiadomości
+  const stored = localStorage.getItem(SHARED_MESSAGES_KEY)
+  const messages: Message[] = stored ? JSON.parse(stored) : []
+  messages.push(messageWithSender)
+  localStorage.setItem(SHARED_MESSAGES_KEY, JSON.stringify(messages))
+
+  // Zaktualizuj wspólne konwersacje
+  const conversationsStored = localStorage.getItem(SHARED_CONVERSATIONS_KEY)
+  const conversations: Conversation[] = conversationsStored ? JSON.parse(conversationsStored) : []
+  
+  const convIndex = conversations.findIndex((conv) => conv.id === messageWithSender.conversationId)
+  if (convIndex !== -1) {
+    conversations[convIndex].lastMessage = messageWithSender
+    conversations[convIndex].updatedAt = messageWithSender.timestamp
+    localStorage.setItem(SHARED_CONVERSATIONS_KEY, JSON.stringify(conversations))
+  }
+
+  // Wyślij event dla synchronizacji
+  dispatchDataUpdate("messages", messageWithSender)
+  
+  // Dodatkowo wyślij custom event dla synchronizacji między rolami
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent('mymidwife:newMessage', { 
+      detail: { message: messageWithSender, fromRole: isMidwife ? 'midwife' : 'patient' }
+    }))
+  }
 }
 
 function markMessagesAsRead(conversationId: string): void {
-  // Aktualizuj wiadomości jako przeczytane w storage
-  const stored = localStorage.getItem(MESSAGES_KEY)
+  if (typeof window === "undefined") return
+
+  // Pobierz informacje o użytkowniku
+  const storedUser = localStorage.getItem("mymidwife_user")
+  const isMidwife = storedUser ? JSON.parse(storedUser).role === "midwife" : false
+
+  // Aktualizuj wiadomości jako przeczytane w wspólnym storage
+  const stored = localStorage.getItem(SHARED_MESSAGES_KEY)
   if (stored) {
     const messages: Message[] = JSON.parse(stored)
     let hasUpdates = false
     
+    // Oznacz jako przeczytane wiadomości od drugiej strony
     messages.forEach(message => {
-      if (message.conversationId === conversationId && !message.isRead && message.senderId !== "demo-patient") {
+      if (message.conversationId === conversationId && 
+          !message.isRead && 
+          ((isMidwife && message.senderId === "patient-anna") || 
+           (!isMidwife && message.senderId === "midwife-maria"))) {
         message.isRead = true
         hasUpdates = true
       }
     })
     
     if (hasUpdates) {
-      localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages))
+      localStorage.setItem(SHARED_MESSAGES_KEY, JSON.stringify(messages))
     }
   }
 
-  // Aktualizuj licznik nieprzeczytanych w konwersacji
-  const conversations = getConversations()
-  const convIndex = conversations.findIndex((conv) => conv.id === conversationId)
-  if (convIndex !== -1) {
-    conversations[convIndex].unreadCount = 0
-    saveConversations(conversations)
+  // Aktualizuj wspólne konwersacje
+  const conversationsStored = localStorage.getItem(SHARED_CONVERSATIONS_KEY)
+  if (conversationsStored) {
+    const conversations: Conversation[] = JSON.parse(conversationsStored)
+    const convIndex = conversations.findIndex((conv) => conv.id === conversationId)
+    if (convIndex !== -1) {
+      // Ponownie przelicz licznik nieprzeczytanych na podstawie aktualnych danych
+      const messages: Message[] = stored ? JSON.parse(stored) : []
+      const unreadCount = messages.filter(msg => 
+        msg.conversationId === conversationId &&
+        !msg.isRead && 
+        ((isMidwife && msg.senderId === "patient-anna") || 
+         (!isMidwife && msg.senderId === "midwife-maria"))
+      ).length
+      
+      conversations[convIndex].unreadCount = unreadCount
+      localStorage.setItem(SHARED_CONVERSATIONS_KEY, JSON.stringify(conversations))
+    }
   }
+
+  // Wyślij event o aktualizacji
+  dispatchDataUpdate("messages", null)
 }
 
 function getTotalUnreadMessages(): number {
@@ -498,7 +559,7 @@ function getSymptomEntries(): SymptomEntry[] {
   }
 
   const defaultEntries: SymptomEntry[] = [
-    // Dzisiejszy wpis
+    // Dzisiejszy wpis (20 tydzień ciąży)
     {
       id: uuidv4(),
       date: new Date().toISOString().split("T")[0],
@@ -506,17 +567,20 @@ function getSymptomEntries(): SymptomEntry[] {
         { category: "Samopoczucie", severity: 2, emoji: "🙂", label: "Dobre" },
         { category: "Energia", severity: 3, emoji: "🪫", label: "Średnia energia" },
         { category: "Sen", severity: 2, emoji: "😌", label: "Dobry sen" },
+        { category: "Nudności", severity: 1, emoji: "🤢", label: "Lekkie" },
+        { category: "Ruchy płodu", severity: 1, emoji: "👶", label: "Aktywne" },
       ],
       mood: { level: 2, emoji: "🙂", label: "Dobre" },
       medicalData: {
         weight: 68.5,
         bloodPressure: { systolic: 120, diastolic: 80 },
         temperature: 36.6,
-        heartRate: 72
+        heartRate: 78
       },
-      notes: "Czuję się dobrze, lekkie nudności rano",
+      notes: "Pierwsze wyraźne ruchy dziecka! Lekkie nudności tylko rano. Czuję się dobrze.",
       createdAt: new Date().toISOString(),
     },
+    
     // Wczoraj
     {
       id: uuidv4(),
@@ -525,17 +589,20 @@ function getSymptomEntries(): SymptomEntry[] {
         { category: "Samopoczucie", severity: 3, emoji: "😐", label: "Neutralne" },
         { category: "Energia", severity: 4, emoji: "😴", label: "Mała energia" },
         { category: "Sen", severity: 4, emoji: "😵", label: "Słaby sen" },
+        { category: "Ból pleców", severity: 3, emoji: "🦴", label: "Umiarkowany" },
+        { category: "Ruchy płodu", severity: 2, emoji: "👶", label: "Delikatne" },
       ],
       mood: { level: 3, emoji: "😐", label: "Neutralne" },
       medicalData: {
         weight: 68.3,
         bloodPressure: { systolic: 118, diastolic: 78 },
-        temperature: 36.7
+        temperature: 36.7,
+        heartRate: 82
       },
-      notes: "Problemy z zasypianiem, zmęczenie",
+      notes: "Problemy z zasypianiem przez ból pleców. Muszę pamiętać o ćwiczeniach.",
       createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     },
-    // 2 dni temu - brak wpisu (żeby pokazać rzeczywistą logi
+
     // 3 dni temu
     {
       id: uuidv4(),
@@ -544,15 +611,82 @@ function getSymptomEntries(): SymptomEntry[] {
         { category: "Samopoczucie", severity: 1, emoji: "😊", label: "Bardzo dobre" },
         { category: "Energia", severity: 2, emoji: "🔋", label: "Dobra energia" },
         { category: "Sen", severity: 1, emoji: "😴", label: "Doskonały sen" },
+        { category: "Nudności", severity: 1, emoji: "🤢", label: "Lekkie" },
       ],
       mood: { level: 1, emoji: "😊", label: "Bardzo dobre" },
       medicalData: {
         weight: 68.1,
         bloodPressure: { systolic: 115, diastolic: 75 },
-        temperature: 36.5
+        temperature: 36.5,
+        heartRate: 75
       },
-      notes: "Świetny dzień, dużo energii!",
+      notes: "Świetny dzień, dużo energii! Pierwszy raz tak wyraźnie poczułam ruchy dziecka.",
       createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+
+    // 5 dni temu
+    {
+      id: uuidv4(),
+      date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      symptoms: [
+        { category: "Samopoczucie", severity: 2, emoji: "🙂", label: "Dobre" },
+        { category: "Energia", severity: 3, emoji: "🪫", label: "Średnia energia" },
+        { category: "Sen", severity: 3, emoji: "😌", label: "W porządku" },
+        { category: "Nudności", severity: 2, emoji: "🤢", label: "Umiarkowane" },
+        { category: "Zgaga", severity: 2, emoji: "🔥", label: "Lekka" },
+      ],
+      mood: { level: 2, emoji: "🙂", label: "Dobre" },
+      medicalData: {
+        weight: 67.9,
+        bloodPressure: { systolic: 118, diastolic: 76 },
+        temperature: 36.6,
+        heartRate: 80
+      },
+      notes: "Pierwsze odczucia zgagi. Muszę uważać na dietę.",
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+
+    // Tydzień temu
+    {
+      id: uuidv4(),
+      date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      symptoms: [
+        { category: "Samopoczucie", severity: 3, emoji: "😐", label: "Neutralne" },
+        { category: "Energia", severity: 4, emoji: "😴", label: "Mała energia" },
+        { category: "Sen", severity: 3, emoji: "😌", label: "W porządku" },
+        { category: "Nudności", severity: 3, emoji: "🤢", label: "Wyraźne" },
+        { category: "Zawroty głowy", severity: 2, emoji: "💫", label: "Lekkie" },
+      ],
+      mood: { level: 3, emoji: "😐", label: "Neutralne" },
+      medicalData: {
+        weight: 67.6,
+        bloodPressure: { systolic: 112, diastolic: 72 },
+        temperature: 36.5,
+        heartRate: 85
+      },
+      notes: "Nudności wciąż dokuczają, ale mniej niż wcześniej. Lekkie zawroty przy wstawaniu.",
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+
+    // 10 dni temu
+    {
+      id: uuidv4(),
+      date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      symptoms: [
+        { category: "Samopoczucie", severity: 1, emoji: "😊", label: "Bardzo dobre" },
+        { category: "Energia", severity: 2, emoji: "🔋", label: "Dobra energia" },
+        { category: "Sen", severity: 2, emoji: "😌", label: "Dobry sen" },
+        { category: "Nudności", severity: 2, emoji: "🤢", label: "Umiarkowane" },
+      ],
+      mood: { level: 2, emoji: "🙂", label: "Dobre" },
+      medicalData: {
+        weight: 67.3,
+        bloodPressure: { systolic: 116, diastolic: 74 },
+        temperature: 36.6,
+        heartRate: 78
+      },
+      notes: "Dobry dzień, nudności malają. Cieszę się na następne USG!",
+      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     },
   ]
 
@@ -593,7 +727,7 @@ function getOrCreateConversation(midwifeId: string, midwifeName: string, midwife
   if (typeof window === "undefined") {
     // This should not happen in a client-side flow, but as a fallback:
     return {
-      id: generateId(),
+      id: ANNA_MARIA_CONVERSATION_ID,
       midwifeId,
       midwifeName,
       midwifeAvatar,
@@ -609,9 +743,15 @@ function getOrCreateConversation(midwifeId: string, midwifeName: string, midwife
     return conversation
   }
 
-  // If not found, create a new one
+  // Dla demo zawsze zwracaj główną konwersację Anna-Maria
+  const existingConversation = conversations.find((c) => c.id === ANNA_MARIA_CONVERSATION_ID)
+  if (existingConversation) {
+    return existingConversation
+  }
+
+  // If not found, create a new one (shouldn't happen in this demo)
   const newConversation: Conversation = {
-    id: generateId(),
+    id: ANNA_MARIA_CONVERSATION_ID,
     midwifeId,
     midwifeName,
     midwifeAvatar,
@@ -619,8 +759,11 @@ function getOrCreateConversation(midwifeId: string, midwifeName: string, midwife
     updatedAt: new Date().toISOString(),
   }
 
-  conversations.push(newConversation)
-  saveConversations(conversations)
+  // Dodaj do wspólnych konwersacji
+  const conversationsStored = localStorage.getItem(SHARED_CONVERSATIONS_KEY)
+  const sharedConversations: Conversation[] = conversationsStored ? JSON.parse(conversationsStored) : []
+  sharedConversations.push(newConversation)
+  localStorage.setItem(SHARED_CONVERSATIONS_KEY, JSON.stringify(sharedConversations))
 
   return newConversation
 }
@@ -629,6 +772,8 @@ function clearDemoData(): void {
   if (typeof window === "undefined") return
   localStorage.removeItem(CONVERSATIONS_KEY)
   localStorage.removeItem(MESSAGES_KEY)
+  localStorage.removeItem(SHARED_CONVERSATIONS_KEY)
+  localStorage.removeItem(SHARED_MESSAGES_KEY)
   localStorage.removeItem(APPOINTMENTS_KEY)
   localStorage.removeItem(SYMPTOMS_KEY)
   dispatchDataUpdate("messages", null)

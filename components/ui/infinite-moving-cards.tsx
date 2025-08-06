@@ -98,7 +98,7 @@ export const InfiniteMovingCards = ({
               ></div>
               <div className="flex items-start gap-4 mb-4">
                 <img
-                  src={item.image || "/placeholder.svg?height=48&width=48"}
+                  src={item.image || "/images/postpartum-care.png"}
                   alt={item.name}
                   className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                 />

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Send, Paperclip, Search, File, Download, Check, CheckCheck, MessageCircle, ArrowLeft } from "lucide-react"
 import { dataManager, type Conversation, type Message } from "@/lib/data-manager"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useAuth } from "@/hooks/use-auth"
 
 export function MessagesSystem({ preselectedConversationId }: { preselectedConversationId?: string | null }) {
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -16,12 +17,16 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [newMessage, setNewMessage] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
-  const [isTyping, setIsTyping] = useState(false)
+
   const [showConversationList, setShowConversationList] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
+  const { isMidwife, user } = useAuth()
+
+  // Pobierz imię użytkownika z systemu autoryzacji
+  const userName = user?.firstName || "Anna"
 
   useEffect(() => {
     const loadedConversations = dataManager.getConversations()
@@ -35,7 +40,7 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
           : null
 
     setSelectedConversationId(conversationToSelect)
-  }, [preselectedConversationId])
+  }, [preselectedConversationId, user])
 
   useEffect(() => {
     if (selectedConversationId) {
@@ -55,8 +60,24 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
         setMessages(dataManager.getMessages(selectedConversationId))
       }
     }
+
+    const handleNewMessage = (event: Event) => {
+      const customEvent = event as CustomEvent
+      const { message, fromRole } = customEvent.detail
+      // Odśwież dane gdy nadejdzie nowa wiadomość z innej roli
+      setConversations(dataManager.getConversations())
+      if (selectedConversationId) {
+        setMessages(dataManager.getMessages(selectedConversationId))
+      }
+    }
+
     window.addEventListener("mymidwife:messagesUpdated", handleUpdate)
-    return () => window.removeEventListener("mymidwife:messagesUpdated", handleUpdate)
+    window.addEventListener("mymidwife:newMessage", handleNewMessage)
+    
+    return () => {
+      window.removeEventListener("mymidwife:messagesUpdated", handleUpdate)
+      window.removeEventListener("mymidwife:newMessage", handleNewMessage)
+    }
   }, [selectedConversationId])
 
   useEffect(() => {
@@ -85,12 +106,15 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedConversationId) return
 
+    const currentConv = conversations.find((c) => c.id === selectedConversationId)
+    if (!currentConv) return
+
     const message: Message = {
       id: dataManager.generateId(),
       conversationId: selectedConversationId,
-      senderId: "demo-patient",
-      senderName: "Ty",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
+      senderId: isMidwife() ? "midwife-maria" : "patient-anna",
+      senderName: isMidwife() ? "Maria Nowak" : "Anna Kowalska",
+      senderAvatar: isMidwife() ? "/images/pregnancy-support.png" : "/images/pregnancy-support.png",
       content: newMessage,
       timestamp: new Date().toISOString(),
       type: "text",
@@ -99,26 +123,6 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
 
     dataManager.saveMessage(message)
     setNewMessage("")
-
-    const currentConv = conversations.find((c) => c.id === selectedConversationId)
-    if (!currentConv) return
-
-    setIsTyping(true)
-    setTimeout(() => {
-      setIsTyping(false)
-      const response: Message = {
-        id: dataManager.generateId(),
-        conversationId: selectedConversationId,
-        senderId: currentConv.midwifeId,
-        senderName: currentConv.midwifeName,
-        senderAvatar: currentConv.midwifeAvatar,
-        content: "Dziękuję za wiadomość! Odpowiem wkrótce.",
-        timestamp: new Date().toISOString(),
-        type: "text",
-        isRead: false,
-      }
-      dataManager.saveMessage(response)
-    }, 2000)
   }
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,12 +138,15 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
       url: URL.createObjectURL(file),
     }
 
+    const currentConv = conversations.find((c) => c.id === selectedConversationId)
+    if (!currentConv) return
+
     const message: Message = {
       id: dataManager.generateId(),
       conversationId: selectedConversationId,
-      senderId: "demo-patient",
-      senderName: "Ty",
-      senderAvatar: "/placeholder.svg?height=40&width=40",
+      senderId: isMidwife() ? "midwife-maria" : "patient-anna",
+      senderName: isMidwife() ? "Maria Nowak" : "Anna Kowalska",
+      senderAvatar: isMidwife() ? "/images/pregnancy-support.png" : "/images/pregnancy-support.png",
       content: `Przesłano plik: ${file.name}`,
       timestamp: new Date().toISOString(),
       type: "file",
@@ -158,11 +165,15 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
   }
 
   const selectedConv = conversations.find((c) => c.id === selectedConversationId)
-  const filteredConversations = conversations.filter(
-    (conv) =>
+  
+  // Filtruj konwersacje w zależności od roli użytkownika
+  const filteredConversations = conversations.filter((conv) => {
+    const matchesSearch = 
       conv.midwifeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.lastMessage?.content.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      conv.lastMessage?.content.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    return matchesSearch
+  })
 
   return (
     <div className="flex h-full bg-white rounded-lg border overflow-hidden">
@@ -175,7 +186,7 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Szukaj rozmów..."
+              placeholder={isMidwife() ? "Szukaj pacjentek..." : "Szukaj rozmów..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -199,7 +210,12 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
             >
               <div className="flex items-start gap-3">
                 <Avatar className="w-12 h-12">
-                  <AvatarImage src={conversation.midwifeAvatar || "/placeholder.svg"} />
+                  <AvatarImage 
+                    src={conversation.midwifeAvatar || "/images/pregnancy-support.png"} 
+                    alt={conversation.midwifeName}
+                    onError={(e) => console.log("Conversation avatar load error:", e)}
+                    onLoad={() => console.log("Conversation avatar loaded successfully")}
+                  />
                   <AvatarFallback>
                     {conversation.midwifeName
                       .split(" ")
@@ -212,7 +228,7 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
                     <div className="flex flex-col">
                       <h3 className="font-semibold text-sm truncate">{conversation.midwifeName}</h3>
                       <Badge variant="secondary" className="text-xs w-fit">
-                        Położna
+                        {isMidwife() ? "Pacjentka" : "Położna"}
                       </Badge>
                     </div>
                     <div className="flex flex-col items-end gap-1">
@@ -255,7 +271,7 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
                     </Button>
                   )}
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={selectedConv.midwifeAvatar || "/placeholder.svg"} />
+                    <AvatarImage src={selectedConv.midwifeAvatar || "/images/pregnancy-support.png"} alt={selectedConv.midwifeName} />
                     <AvatarFallback>
                       {selectedConv.midwifeName
                         .split(" ")
@@ -285,8 +301,15 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
                         <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce"></div>
                       </div>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-700 mb-2">Rozpocznij konwersację</h3>
-                    <p className="text-gray-500 mb-4">Napisz wiadomość, aby rozpocząć rozmowę z położną</p>
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">
+                      {isMidwife() ? "Rozpocznij konwersację z pacjentką" : "Rozpocznij konwersację"}
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {isMidwife() 
+                        ? "Napisz wiadomość, aby rozpocząć rozmowę z pacjentką"
+                        : "Napisz wiadomość, aby rozpocząć rozmowę z położną"
+                      }
+                    </p>
                     <div className="flex gap-2 justify-center">
                       <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
@@ -297,14 +320,17 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
               ) : (
                 <>
                   {messages.map((message) => {
-                    const isOwn = message.senderId === "demo-patient"
+                    // Sprawdź czy wiadomość jest własna na podstawie roli użytkownika
+                    const isOwn = isMidwife() 
+                      ? (message.senderId === "midwife-maria")
+                      : (message.senderId === "patient-anna")
                     return (
                       <div key={message.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-[70%]`}>
                           {!isOwn && (
                             <div className="flex items-center gap-2 mb-1">
                               <Avatar className="w-6 h-6">
-                                <AvatarImage src={message.senderAvatar || "/placeholder.svg"} />
+                                <AvatarImage src={message.senderAvatar || "/images/pregnancy-support.png"} alt={message.senderName} />
                                 <AvatarFallback className="text-xs">
                                   {message.senderName
                                     .split(" ")
@@ -361,32 +387,6 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
                       </div>
                     )
                   })}
-                  {isTyping && (
-                    <div className="flex justify-start">
-                      <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-3">
-                        <Avatar className="w-6 h-6">
-                          <AvatarImage src={selectedConv.midwifeAvatar || "/placeholder.svg"} />
-                          <AvatarFallback className="text-xs">
-                            {selectedConv.midwifeName
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex gap-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div
-                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                            style={{ animationDelay: "0.1s" }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                            style={{ animationDelay: "0.2s" }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
               <div ref={messagesEndRef} />
@@ -406,7 +406,7 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
                 </Button>
                 <div className="flex-1">
                   <Input
-                    placeholder="Napisz wiadomość..."
+                    placeholder={isMidwife() ? "Napisz wiadomość do pacjentki..." : "Napisz wiadomość..."}
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => {
@@ -432,7 +432,7 @@ export function MessagesSystem({ preselectedConversationId }: { preselectedConve
           <div className="flex-1 flex items-center justify-center text-gray-500">
             <div className="text-center">
               <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Wybierz rozmowę, aby rozpocząć czat</p>
+              <p>{isMidwife() ? "Wybierz pacjentkę, aby rozpocząć czat" : "Wybierz rozmowę, aby rozpocząć czat"}</p>
             </div>
           </div>
         )}

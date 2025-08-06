@@ -6,7 +6,7 @@ const testimonials = [
       "Dzięki MyMidwife znalazłam wspaniałą położną, która towarzyszyła mi przez całą ciążę. Profesjonalizm na najwyższym poziomie.",
     name: "Anna Kowalska",
     location: "Warszawa",
-    image: "/placeholder.svg?height=60&width=60",
+    image: "/images/pregnancy-support.png",
     rating: 5,
   },
   {
@@ -14,14 +14,14 @@ const testimonials = [
       "Aplikacja bardzo intuicyjna, a możliwość bezpośredniego kontaktu z położną to ogromne ułatwienie. Polecam każdej przyszłej mamie!",
     name: "Magdalena Nowak",
     location: "Kraków",
-    image: "/placeholder.svg?height=60&width=60",
+    image: "/images/pregnancy-support.png",
     rating: 5,
   },
   {
     quote: "Fantastyczne wsparcie w okresie poporodowym. Położna była zawsze dostępna i udzielała cennych rad.",
     name: "Katarzyna Wiśniewska",
     location: "Gdańsk",
-    image: "/placeholder.svg?height=60&width=60",
+    image: "/images/pregnancy-support.png",
     rating: 5,
   },
   {
@@ -29,14 +29,14 @@ const testimonials = [
       "Dzienniczek objawów pomógł mi lepiej zrozumieć moje ciało. Położna mogła lepiej dostosować opiekę do moich potrzeb.",
     name: "Joanna Kaczmarek",
     location: "Wrocław",
-    image: "/placeholder.svg?height=60&width=60",
+    image: "/images/pregnancy-support.png",
     rating: 5,
   },
   {
     quote: "Szybko znalazłam położną w mojej okolicy. System rezerwacji wizyt działa bez zarzutu.",
     name: "Monika Lewandowska",
     location: "Poznań",
-    image: "/placeholder.svg?height=60&width=60",
+    image: "/images/pregnancy-support.png",
     rating: 5,
   },
   {
@@ -44,7 +44,7 @@ const testimonials = [
       "Wsparcie 24/7 i możliwość szybkiego kontaktu w nagłych przypadkach. MyMidwife daje poczucie bezpieczeństwa.",
     name: "Agnieszka Zielińska",
     location: "Łódź",
-    image: "/placeholder.svg?height=60&width=60",
+    image: "/images/pregnancy-support.png",
     rating: 5,
   },
 ]
@@ -61,7 +61,7 @@ export function TestimonialsTiles() {
             >
               <div className="flex items-start gap-4 mb-4">
                 <img
-                  src={testimonial.image || "/placeholder.svg"}
+                  src={testimonial.image || "/images/pregnancy-support.png"}
                   alt={testimonial.name}
                   className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                 />

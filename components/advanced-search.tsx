@@ -61,7 +61,7 @@ const mockMidwives = [
     experience: 8,
     priceRange: "150-200 zł",
     availability: getAvailabilityText(new Date()),
-    image: "/placeholder.svg?height=120&width=120",
+    image: "/images/midwife-consultation.png",
     verified: true,
     premium: true,
     responseTime: "15 min",
@@ -75,11 +75,11 @@ const mockMidwives = [
     location: "Kraków, Stare Miasto",
     rating: 4.8,
     reviews: 89,
-    services: ["Porody domowe", "Wsparcie w karmieniu", "Opieka poporodowa", "Chustonoszenie", "Opieka okołomenopauzalna", "Edukacja zdrowia intymnego"],
+    services: ["Porody domowe", "Opieka poporodowa", "Chustonoszenie", "Opieka okołomenopauzalna", "Edukacja zdrowia intymnego"],
     experience: 12,
     priceRange: "180-250 zł",
     availability: getAvailabilityText(addDays(new Date(), 1)),
-    image: "/placeholder.svg?height=120&width=120",
+    image: "/images/pregnancy-support.png",
     verified: true,
     premium: false,
     responseTime: "30 min",
@@ -93,11 +93,11 @@ const mockMidwives = [
     location: "Gdańsk, Wrzeszcz",
     rating: 4.7,
     reviews: 156,
-    services: ["Konsultacje online", "Edukacja przedporodowa", "Psychologia perinatalna", "CDL", "Wsparcie w okresie dojrzewania u nastolatek", "Edukacja seksualna"],
+    services: ["Edukacja przedporodowa ( szkoła rodzenia )", "Psychologia perinatalna", "CDL", "Wsparcie w okresie dojrzewania u nastolatek", "Edukacja seksualna"],
     experience: 6,
     priceRange: "120-180 zł",
     availability: getAvailabilityText(addDays(new Date(), 7)),
-    image: "/placeholder.svg?height=120&width=120",
+    image: "/images/prenatal-care.png",
     verified: true,
     premium: true,
     responseTime: "45 min",
@@ -112,8 +112,6 @@ const mockMidwives = [
     rating: 4.6,
     reviews: 73,
     services: [
-      "Opieka nad wcześniakami",
-      "Wsparcie w karmieniu",
       "Opieka prenatalna",
       "Prowadzenie ciąży fizjologicznej",
       "Fizjoterapia uroginekologiczna",
@@ -122,7 +120,7 @@ const mockMidwives = [
     experience: 10,
     priceRange: "160-220 zł",
     availability: getAvailabilityText(addDays(new Date(), 2)),
-    image: "/placeholder.svg?height=120&width=120",
+    image: "/images/postpartum-care.png",
     verified: false,
     premium: false,
     responseTime: "60 min",
@@ -136,11 +134,11 @@ const mockMidwives = [
     location: "Poznań, Jeżyce",
     rating: 4.9,
     reviews: 201,
-    services: ["CDL", "Porody domowe", "Edukacja przedporodowa", "Chustonoszenie", "Seksuologia - konsultacja seksuologiczna", "Edukacja zdrowia intymnego"],
+    services: ["CDL", "Porody domowe", "Edukacja przedporodowa ( szkoła rodzenia )", "Chustonoszenie", "Seksuologia - konsultacja seksuologiczna", "Edukacja zdrowia intymnego"],
     experience: 15,
     priceRange: "200-300 zł",
     availability: getAvailabilityText(new Date()),
-    image: "/placeholder.svg?height=120&width=120",
+    image: "/images/nurse-checklist.jpg",
     verified: true,
     premium: true,
     responseTime: "10 min",
@@ -155,11 +153,8 @@ const serviceIcons: { [key: string]: React.ElementType } = {
   "Porody domowe": Home,
   "Opieka poporodowa": Users,
   CDL: CheckCircle,
-  "Edukacja przedporodowa": Stethoscope,
-  "Konsultacje online": Video,
-  "Wsparcie w karmieniu": Heart,
+  "Edukacja przedporodowa ( szkoła rodzenia )": Stethoscope,
   "Psychologia perinatalna": Users,
-  "Opieka nad wcześniakami": Baby,
   Chustonoszenie: Baby,
   "Prowadzenie ciąży fizjologicznej": Heart,
 }
@@ -592,7 +587,12 @@ export function AdvancedSearch() {
                             {/* Midwife Info - Mobile Optimized */}
                             <Link href={`/midwife/${midwife.id}`} className="flex flex-1 gap-3 sm:gap-4 min-w-0">
                               <Avatar className="w-16 h-16 sm:w-16 sm:h-16 flex-shrink-0">
-                                <AvatarImage src={midwife.image || "/placeholder.svg"} alt={midwife.name} />
+                                <AvatarImage 
+                                  src={midwife.image || "/images/midwife-consultation.png"} 
+                                  alt={midwife.name}
+                                  onError={(e) => console.log("Avatar load error:", e)}
+                                  onLoad={() => console.log("Avatar loaded successfully")}
+                                />
                                 <AvatarFallback className="text-lg">
                                   {midwife.name
                                     .split(" ")

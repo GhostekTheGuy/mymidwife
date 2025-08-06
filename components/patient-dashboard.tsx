@@ -140,7 +140,7 @@ export function PatientDashboard() {
       {
         id: "1",
         midwifeName: "Anna Kowalska",
-        midwifeAvatar: "/placeholder.svg?height=40&width=40",
+        midwifeAvatar: "/images/pregnancy-support.png",
         date: "2024-01-15",
         time: "10:00",
         type: "consultation",
@@ -151,7 +151,7 @@ export function PatientDashboard() {
       {
         id: "2",
         midwifeName: "Maria Nowak",
-        midwifeAvatar: "/placeholder.svg?height=40&width=40",
+        midwifeAvatar: "/images/pregnancy-support.png",
         date: "2024-01-20",
         time: "14:30",
         type: "checkup",
@@ -353,7 +353,7 @@ export function PatientDashboard() {
               <div key={appointment.id} className="border rounded-lg p-3 sm:p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                   <Avatar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto sm:mx-0">
-                    <AvatarImage src={appointment.midwifeAvatar || "/placeholder.svg"} />
+                    <AvatarImage src={appointment.midwifeAvatar || "/images/pregnancy-support.png"} />
                     <AvatarFallback>
                       {appointment.midwifeName
                         .split(" ")
@@ -462,7 +462,7 @@ export function PatientDashboard() {
             <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <Avatar className="w-12 h-12 sm:w-16 sm:h-16 mx-auto sm:mx-0">
-                  <AvatarImage src={appointment.midwifeAvatar || "/placeholder.svg"} />
+                  <AvatarImage src={appointment.midwifeAvatar || "/images/pregnancy-support.png"} />
                   <AvatarFallback>
                     {appointment.midwifeName
                       .split(" ")

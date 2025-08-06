@@ -63,7 +63,7 @@ export function MidwifeBenefits() {
             {/* Background Images */}
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="space-y-4">
-                <div className="h-48 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl overflow-hidden">
+                <div className="h-40 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl overflow-hidden">
                   <img
                     src="/images/midwife-consultation.png"
                     alt="Położna z pacjentką podczas konsultacji"
@@ -77,12 +77,13 @@ export function MidwifeBenefits() {
                     className="w-full h-full object-cover"
                   />
                 </div>
+
               </div>
               <div className="space-y-4 pt-8">
                 <div className="h-32 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl overflow-hidden">
                   <img src="/images/prenatal-care.png" alt="Opieka prenatalna" className="w-full h-full object-cover" />
                 </div>
-                <div className="h-48 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl overflow-hidden">
+                <div className="h-40 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl overflow-hidden">
                   <img
                     src="/images/postpartum-care.png"
                     alt="Opieka poporodowa i wsparcie zdrowotne"

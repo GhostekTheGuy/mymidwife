@@ -99,7 +99,7 @@ export function ProfileEditor() {
           city: "Warszawa",
           postalCode: "00-001",
         },
-        avatar: "/placeholder.svg?height=100&width=100",
+        avatar: "/images/midwife-consultation.png",
         pregnancy: {
           isPregnant: true,
           dueDate: "2024-08-15",
@@ -313,7 +313,7 @@ export function ProfileEditor() {
                 {/* Avatar */}
                 <div className="flex items-center gap-4">
                   <Avatar className="w-20 h-20">
-                    <AvatarImage src={editedProfile.avatar || "/placeholder.svg"} />
+                    <AvatarImage src={editedProfile.avatar || "/images/midwife-consultation.png"} />
                     <AvatarFallback>
                       {editedProfile.firstName[0]}
                       {editedProfile.lastName[0]}

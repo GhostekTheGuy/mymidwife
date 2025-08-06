@@ -16,7 +16,7 @@ export default function PatientDemoPage() {
   const upcomingAppointments = [
     {
       id: 1,
-      midwife: "Anna Kowalska",
+      midwife: "Maria Nowak",
       date: formatDate(addDays(new Date(), 1)),
       time: "10:00",
       type: "Kontrola prenatalna",
@@ -24,10 +24,10 @@ export default function PatientDemoPage() {
     },
     {
       id: 2,
-      midwife: "Magdalena Nowak",
+      midwife: "Maria Nowak",
       date: formatDate(addDays(new Date(), 7)),
       time: "14:30",
-      type: "Edukacja przedporodowa",
+      type: "Edukacja przedporodowa ( szkoła rodzenia )",
       location: "Online",
     },
   ]
@@ -36,15 +36,15 @@ export default function PatientDemoPage() {
   const recentMessages = [
     {
       id: 1,
-      midwife: "Anna Kowalska",
+      midwife: "Maria Nowak",
       message: "Jak się czujesz po ostatniej wizycie?",
       time: formatRelativeTime(new Date(Date.now() - 2 * 60 * 60 * 1000)),
       unread: true,
     },
     {
       id: 2,
-      midwife: "Magdalena Nowak",
-      message: "Materiały do następnej sesji edukacyjnej",
+      midwife: "Maria Nowak",
+      message: "Przesyłam materiały do następnej sesji edukacyjnej",
       time: formatRelativeTime(new Date(Date.now() - 24 * 60 * 60 * 1000)),
       unread: false,
     },

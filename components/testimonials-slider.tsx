@@ -9,49 +9,49 @@ const testimonials = [
       "Dzięki MyMidwife znalazłam wspaniałą położną, która towarzyszyła mi przez całą ciążę. Profesjonalizm na najwyższym poziomie. Czułam się bezpiecznie przez cały okres.",
     name: "Anna Kowalska",
     title: "Warszawa • Opieka prenatalna",
-    image: "/placeholder.svg?height=48&width=48",
+    image: "/images/midwife-consultation.png",
   },
   {
     quote:
       "Aplikacja bardzo intuicyjna, a możliwość bezpośredniego kontaktu z położną to ogromne ułatwienie. Polecam każdej przyszłej mamie! System rezerwacji działa bez zarzutu.",
     name: "Magdalena Nowak",
     title: "Kraków • Poród prywatny",
-    image: "/placeholder.svg?height=48&width=48",
+    image: "/images/midwife-consultation.png",
   },
   {
     quote:
       "Fantastyczne wsparcie w okresie poporodowym. Położna była zawsze dostępna i udzielała cennych rad. Czuję się bezpiecznie i mogę liczyć na profesjonalną pomoc.",
     name: "Katarzyna Wiśniewska",
     title: "Gdańsk • Opieka poporodowa",
-    image: "/placeholder.svg?height=48&width=48",
+    image: "/images/midwife-consultation.png",
   },
   {
     quote:
       "Dzienniczek objawów pomógł mi lepiej zrozumieć moje ciało. Położna mogła lepiej dostosować opiekę do moich potrzeb. To naprawdę zmienia sposób opieki medycznej.",
     name: "Joanna Kaczmarek",
-    title: "Wrocław • Edukacja przedporodowa",
-    image: "/placeholder.svg?height=48&width=48",
+    title: "Wrocław • Edukacja przedporodowa ( szkoła rodzenia )",
+    image: "/images/midwife-consultation.png",
   },
   {
     quote:
       "Szybko znalazłam położną w mojej okolicy. System rezerwacji wizyt działa bez zarzutu. Bardzo polecam wszystkim kobietom szukającym profesjonalnej opieki.",
     name: "Monika Lewandowska",
     title: "Poznań • Opieka prenatalna",
-    image: "/placeholder.svg?height=48&width=48",
+    image: "/images/midwife-consultation.png",
   },
   {
     quote:
       "Wsparcie 24/7 i możliwość szybkiego kontaktu w nagłych przypadkach. MyMidwife daje poczucie bezpieczeństwa, którego potrzebowałam podczas ciąży.",
     name: "Agnieszka Zielińska",
     title: "Łódź • Opieka kompleksowa",
-    image: "/placeholder.svg?height=48&width=48",
+    image: "/images/midwife-consultation.png",
   },
   {
     quote:
       "Edukacyjne materiały i webinary pomogły mi przygotować się do porodu. Położna była cierpliwa i odpowiadała na wszystkie moje pytania.",
     name: "Paulina Dąbrowska",
     title: "Szczecin • Przygotowanie do porodu",
-    image: "/placeholder.svg?height=48&width=48",
+    image: "/images/midwife-consultation.png",
   },
 ]
 
@@ -107,7 +107,7 @@ export function TestimonialsSlider() {
                 <blockquote>
                   <div className="flex items-start gap-4 mb-4">
                     <img
-                      src={testimonial.image || "/placeholder.svg?height=48&width=48"}
+                      src={testimonial.image || "/images/midwife-consultation.png"}
                       alt={testimonial.name}
                       className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                     />

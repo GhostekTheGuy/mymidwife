@@ -21,7 +21,7 @@ export default function NavigationBar() {
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false)
 
   /* Auth state ------------------------------------------------------------ */
-  const { user, getDemoAccountType } = useAuth()
+  const { user, getDemoAccountType, isMidwife } = useAuth()
 
   /* Search state ---------------------------------------------------------- */
   const [cityQuery, setCityQuery] = React.useState("")
@@ -36,6 +36,14 @@ export default function NavigationBar() {
 
   const handleMobileSearchClick = () => {
     setIsSearchModalOpen(true)
+  }
+
+  // Określ odpowiedni link do dashboardu na podstawie roli
+  const getDashboardLink = () => {
+    if (isMidwife()) {
+      return "/demo/midwife-dashboard"
+    }
+    return "/dashboard"
   }
 
   /* JSX ------------------------------------------------------------------- */
@@ -78,11 +86,11 @@ export default function NavigationBar() {
             <DemoAccountSwitcher />
             {user && getDemoAccountType !== "guest" && (
               <>
-                <Link href="/dashboard" passHref>
+                <Link href={getDashboardLink()} passHref>
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label="Panel Pacjentki"
+                    aria-label={isMidwife() ? "Panel Położnej" : "Panel Pacjentki"}
                     className="h-10 w-10 bg-pink-300 shadow-inner hover:bg-pink-500 rounded-lg transition-colors"
                   >
                     <LottieIcon />
@@ -108,10 +116,10 @@ export default function NavigationBar() {
 
             {/* Patient panel icon */}
             {user && getDemoAccountType !== "guest" && (
-              <Link href="/dashboard">
+              <Link href={getDashboardLink()}>
                 <button
                   className="p-2 bg-pink-300 shadow-inner hover:bg-pink-500 rounded-lg transition-colors"
-                  aria-label="Panel Pacjentki"
+                  aria-label={isMidwife() ? "Panel Położnej" : "Panel Pacjentki"}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
                     <LottieIcon />
