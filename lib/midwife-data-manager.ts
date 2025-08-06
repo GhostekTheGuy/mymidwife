@@ -66,10 +66,10 @@ class MidwifeDataManager {
       email: 'maria.nowak@mymidwife.pl',
       bio: 'Specjalizuję się w porodach domowych i naturalnym rodzeniu. Moje podejście opiera się na szacunku dla naturalnych procesów i wspieraniu kobiet w ich wyborach. Posiadam 12-letnie doświadczenie w położnictwie i jestem certyfikowaną doula.',
       gallery: [
-        '/placeholder.svg?height=400&width=600&text=Dom+Maria+1',
-        '/placeholder.svg?height=400&width=600&text=Dom+Maria+2',
-        '/placeholder.svg?height=400&width=600&text=Sprzęt+Maria',
-        '/placeholder.svg?height=400&width=600&text=Certyfikaty+Maria',
+        '/images/pregnancy-support.png',
+        '/images/midwife-consultation.png',
+        '/images/prenatal-care.png',
+        '/images/postpartum-care.png',
       ],
       services: [
         {

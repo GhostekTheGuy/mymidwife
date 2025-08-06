@@ -776,6 +776,7 @@ function clearDemoData(): void {
   localStorage.removeItem(SHARED_MESSAGES_KEY)
   localStorage.removeItem(APPOINTMENTS_KEY)
   localStorage.removeItem(SYMPTOMS_KEY)
+  localStorage.removeItem('hasSeenDemoBanner')
   dispatchDataUpdate("messages", null)
   dispatchDataUpdate("appointments", null)
   dispatchDataUpdate("symptoms", null)

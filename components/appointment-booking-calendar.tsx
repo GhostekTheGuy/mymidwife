@@ -280,7 +280,7 @@ export function AppointmentBookingCalendar({
                 {/* Calendar Grid */}
                 <div className="grid grid-cols-7 gap-1 mb-4">
                   {DAYS.map((day) => (
-                    <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
+                    <div key={day} className="p-1 sm:p-2 text-center text-xs sm:text-sm font-medium text-gray-500">
                       {day}
                     </div>
                   ))}
@@ -289,7 +289,7 @@ export function AppointmentBookingCalendar({
                 <div className="grid grid-cols-7 gap-1">
                   {days.map((date, index) => {
                     if (!date) {
-                      return <div key={index} className="p-2 h-16" />
+                      return <div key={index} className="p-1 sm:p-2 h-12 sm:h-16" />
                     }
 
                     const hasSlots = hasAvailableSlots(date)
@@ -302,7 +302,7 @@ export function AppointmentBookingCalendar({
                         key={index}
                         onClick={() => handleDateSelect(date)}
                         disabled={isPast || !hasSlots || !isCurrentMonthDate}
-                        className={`p-2 h-16 border rounded-lg transition-all duration-200 ${
+                        className={`p-1 sm:p-2 h-12 sm:h-16 border rounded-lg transition-all duration-200 ${
                           isPast || !hasSlots || !isCurrentMonthDate
                             ? "opacity-50 cursor-not-allowed bg-gray-50"
                             : "cursor-pointer hover:bg-pink-50 hover:border-pink-300 hover:shadow-sm"
@@ -311,14 +311,14 @@ export function AppointmentBookingCalendar({
                         }`}
                       >
                         <div
-                          className={`text-sm font-medium ${
+                          className={`text-xs sm:text-sm font-medium ${
                             isTodayDate && isCurrentMonthDate ? "text-pink-600" : "text-gray-900"
                           }`}
                         >
                           {date.getDate()}
                         </div>
                         {hasSlots && isCurrentMonthDate && !isPast && (
-                          <div className="text-xs text-green-600 mt-1">
+                          <div className="text-xs text-green-600 mt-1 truncate px-1">
                             {mockAvailability[getDateString(date)]?.length} terminów
                           </div>
                         )}

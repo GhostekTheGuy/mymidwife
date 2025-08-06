@@ -30,7 +30,18 @@ export default function DashboardPage() {
   // Jeśli użytkownik jest położną, przekieruj do dashboardu położnej
   useEffect(() => {
     if (!isLoading && isMidwife()) {
-      router.push("/demo/midwife-dashboard")
+      const searchParams = new URLSearchParams(window.location.search)
+      const tab = searchParams.get('tab')
+      const conversationId = searchParams.get('conversationId')
+      
+      let url = "/demo/midwife-dashboard"
+      if (tab || conversationId) {
+        url += "?"
+        if (tab) url += `tab=${tab}`
+        if (conversationId) url += `${tab ? '&' : ''}conversationId=${conversationId}`
+      }
+      
+      router.push(url)
     }
   }, [isLoading, isMidwife, router])
 

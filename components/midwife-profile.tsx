@@ -78,12 +78,12 @@ const mockMidwives = {
     email: "anna.kowalska@mymidwife.pl",
     bio: "Cieszę się, że tu trafiłaś/eś 😊 bo to znaczy że cenisz jakość i doświadczenie. Pracuję jako położna od ponad 8 lat dodatkowo jestem szkoleniowcem dla największych szkół fitness w PL szkołąc trenerów personalnych od 11 lat. Posiadam certyfikaty w zakresie opieki prenatalnej i wsparcia w naturalnym rodzeniu.",
     gallery: [
-      "/placeholder.svg?height=400&width=600&text=Gabinet+Anna+1",
-      "/placeholder.svg?height=400&width=600&text=Gabinet+Anna+2",
-      "/placeholder.svg?height=400&width=600&text=Sprzęt+medyczny+Anna",
+      "/images/midwife-consultation.png",
+      "/images/prenatal-care.png",
+      "/images/pregnancy-support.png",
       "/images/nurse-checklist.jpg",
-      "/placeholder.svg?height=400&width=600&text=Certyfikaty+Anna",
-      "/placeholder.svg?height=400&width=600&text=Sala+konsultacyjna+Anna",
+      "/images/postpartum-care.png",
+      "/images/midwife-consultation.png",
     ],
     services: [
       {
@@ -189,11 +189,11 @@ const mockMidwives = {
     email: "maria.nowak@mymidwife.pl",
     bio: "Specjalizuję się w porodach domowych i naturalnym rodzeniu. Moje podejście opiera się na szacunku dla naturalnych procesów i wspieraniu kobiet w ich wyborach. Posiadam 12-letnie doświadczenie w położnictwie i jestem certyfikowaną doula.",
     gallery: [
-      "/placeholder.svg?height=400&width=600&text=Dom+Maria+1",
-      "/placeholder.svg?height=400&width=600&text=Dom+Maria+2",
+      "/images/pregnancy-support.png",
+      "/images/midwife-consultation.png",
       "/images/nurse-checklist.jpg",
-      "/placeholder.svg?height=400&width=600&text=Sprzęt+Maria",
-      "/placeholder.svg?height=400&width=600&text=Certyfikaty+Maria",
+      "/images/prenatal-care.png",
+      "/images/postpartum-care.png",
     ],
     services: [
       {
@@ -238,11 +238,11 @@ const mockMidwives = {
     email: "katarzyna.wisniewska@mymidwife.pl",
     bio: "Młoda, energiczna położna z nowoczesnym podejściem do opieki prenatalnej. Specjalizuję się w diagnostyce prenatalnej i psychologii perinatnej. Ukończyłam liczne kursy z zakresu ultrasonografii i wsparcia psychologicznego kobiet w ciąży.",
     gallery: [
-      "/placeholder.svg?height=400&width=600&text=Gabinet+Katarzyna+1",
-      "/placeholder.svg?height=400&width=600&text=USG+Katarzyna",
+      "/images/midwife-consultation.png",
+      "/images/prenatal-care.png",
       "/images/nurse-checklist.jpg",
-      "/placeholder.svg?height=400&width=600&text=Konsultacje+Katarzyna",
-      "/placeholder.svg?height=400&width=600&text=Certyfikaty+Katarzyna",
+      "/images/pregnancy-support.png",
+      "/images/postpartum-care.png",
     ],
     services: [
 
@@ -294,11 +294,11 @@ const mockMidwives = {
     email: "joanna.kowalczyk@mymidwife.pl",
     bio: "Specjalizuję się w opiece nad wcześniakami i noworodkami wymagającymi szczególnej uwagi. Mam 10-letnie doświadczenie w neonatologii i jestem certyfikowaną konsultantką laktacyjną. Pomagam rodzicom w nauce opieki nad małymi dziećmi.",
     gallery: [
-      "/placeholder.svg?height=400&width=600&text=OIOM+Joanna",
-      "/placeholder.svg?height=400&width=600&text=Inkubatory+Joanna",
+      "/images/postpartum-care.png",
+      "/images/midwife-consultation.png",
       "/images/nurse-checklist.jpg",
-      "/placeholder.svg?height=400&width=600&text=Gabinet+Joanna",
-      "/placeholder.svg?height=400&width=600&text=Certyfikaty+Joanna",
+      "/images/prenatal-care.png",
+      "/images/pregnancy-support.png",
     ],
     services: [
 
@@ -343,12 +343,12 @@ const mockMidwives = {
     email: "magdalena.zielinska@mymidwife.pl",
     bio: "Jestem położną z 15-letnim doświadczeniem i tytułem magistra położnictwa. Specjalizuję się w CDL (Ciągłość Opieki Położnej) oraz porodach domowych. Jestem autorką kilku publikacji naukowych z zakresu położnictwa i prowadzę szkolenia dla młodszych koleżanek.",
     gallery: [
-      "/placeholder.svg?height=400&width=600&text=Gabinet+Magdalena+1",
-      "/placeholder.svg?height=400&width=600&text=Gabinet+Magdalena+2",
+      "/images/midwife-consultation.png",
+      "/images/prenatal-care.png",
       "/images/nurse-checklist.jpg",
-      "/placeholder.svg?height=400&width=600&text=Sala+porodowa+Magdalena",
-      "/placeholder.svg?height=400&width=600&text=Biblioteka+Magdalena",
-      "/placeholder.svg?height=400&width=600&text=Dyplomy+Magdalena",
+      "/images/pregnancy-support.png",
+      "/images/postpartum-care.png",
+      "/images/midwife-consultation.png",
     ],
     services: [
       {

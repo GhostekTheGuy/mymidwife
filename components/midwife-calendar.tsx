@@ -35,7 +35,7 @@ const MONTHS = [
   "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
 ]
 
-const DAYS = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nie"]
+const DAYS_OF_WEEK = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nie"]
 
 // Definicja typów usług i ich czasów trwania (w slotach po 30 min)
 const serviceTypes: Record<string, { duration: number; description: string }> = {
@@ -52,6 +52,7 @@ const serviceTypes: Record<string, { duration: number; description: string }> = 
 
 // Funkcja do parsowania godziny
 const parseTime = (timeStr: string) => {
+  if (!timeStr || !timeStr.includes(':')) return 0
   const [hours, minutes] = timeStr.split(':').map(Number)
   return hours * 60 + minutes
 }
@@ -74,8 +75,6 @@ const isTimeSlotOccupied = (appointments: Appointment[], date: string, time: str
     const aptStart = parseTime(apt.time)
     const aptDuration = serviceTypes[apt.type]?.duration || 1
     const aptEnd = aptStart + (aptDuration * 30)
-    
-    // Sprawdź czy przedziały czasowe się nakładają
     return (timeInMinutes < aptEnd && (timeInMinutes + duration * 30) > aptStart)
   })
 }
@@ -114,9 +113,7 @@ export function MidwifeCalendar({
   appointments, 
   midwifeId = '2', // Default to Maria Nowak for demo
   onAppointmentAction,
-  onAvailabilityChange 
 }: MidwifeCalendarProps) {
-  const isMobile = useIsMobile()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [showAvailabilityDialog, setShowAvailabilityDialog] = useState(false)
@@ -125,6 +122,16 @@ export function MidwifeCalendar({
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([])
   const [editingSlot, setEditingSlot] = useState<AvailabilitySlot | null>(null)
   const [midwifeAvailability, setMidwifeAvailability] = useState<MidwifeAvailability[]>([])
+  const isMobile = useIsMobile()
+  const [viewMode, setViewMode] = useState<'month' | 'week'>('week')
+
+  useEffect(() => {
+    if (isMobile) {
+      setViewMode('week');
+    } else {
+      setViewMode('month');
+    }
+  }, [isMobile]);
 
   // Load availability from data manager
   useEffect(() => {
@@ -135,7 +142,6 @@ export function MidwifeCalendar({
     
     loadAvailability()
     
-    // Subscribe to availability changes
     const unsubscribe = midwifeDataManager.subscribeToAvailability(midwifeId, (availability) => {
       setMidwifeAvailability(availability)
     })
@@ -145,18 +151,15 @@ export function MidwifeCalendar({
 
   // React to appointments changes
   useEffect(() => {
-    // Force re-render when appointments change
     if (selectedDate) {
       setAvailabilitySlots(generateAvailabilityForDate(selectedDate))
     }
   }, [appointments, selectedDate])
 
-  // Get availability for a specific date
   const getAvailabilityForDate = (date: string) => {
     return midwifeAvailability.filter(slot => slot.date === date)
   }
 
-  // Convert MidwifeAvailability to AvailabilitySlot for UI
   const convertToAvailabilitySlot = (midwifeSlot: MidwifeAvailability): AvailabilitySlot => ({
     id: midwifeSlot.id,
     date: midwifeSlot.date,
@@ -166,28 +169,39 @@ export function MidwifeCalendar({
     currentBookings: midwifeSlot.currentBookings
   })
 
-  // Generuj dostępność dla wybranego dnia (fallback)
   const generateAvailabilityForDate = (date: string) => {
     const existingSlots = getAvailabilityForDate(date)
     if (existingSlots.length > 0) {
       return existingSlots.map(convertToAvailabilitySlot)
     }
     
-    // Fallback to realistic generation based on confirmed appointments
     const slots = generateTimeSlots(9, 17, 30)
     return slots.map(time => {
-      // Sprawdź czy ten slot jest zajęty przez jakąkolwiek potwierdzoną wizytę
       const isOccupied = isTimeSlotOccupied(appointments, date, time, 1)
-      
       return {
         id: `${date}-${time}`,
         date,
         time,
-        isAvailable: !isOccupied, // Slot dostępny tylko jeśli nie jest zajęty
+        isAvailable: !isOccupied,
         maxBookings: 1,
         currentBookings: isOccupied ? 1 : 0
       }
     })
+  }
+  
+  const getDaysInWeek = (date: Date) => {
+    const startOfWeek = new Date(date)
+    const day = startOfWeek.getDay()
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1)
+    startOfWeek.setDate(diff)
+    
+    const days = []
+    for (let i = 0; i < 7; i++) {
+      const weekDay = new Date(startOfWeek)
+      weekDay.setDate(startOfWeek.getDate() + i)
+      days.push(weekDay)
+    }
+    return days
   }
 
   const getDaysInMonth = (date: Date) => {
@@ -196,50 +210,42 @@ export function MidwifeCalendar({
     const firstDay = new Date(year, month, 1)
     const lastDay = new Date(year, month + 1, 0)
     const daysInMonth = lastDay.getDate()
-    const startingDayOfWeek = (firstDay.getDay() + 6) % 7 // Adjust for Monday start
+    const startingDayOfWeek = (firstDay.getDay() + 6) % 7 // Monday start
 
-    const days = []
-
-    // Add empty cells for days before the first day of the month
+    const days: (Date | null)[] = []
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null)
     }
-
-    // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day))
     }
-
     return days
   }
 
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev)
-      if (direction === "prev") {
-        newDate.setMonth(prev.getMonth() - 1)
-      } else {
-        newDate.setMonth(prev.getMonth() + 1)
-      }
+      newDate.setMonth(prev.getMonth() + (direction === "prev" ? -1 : 1))
+      return newDate
+    })
+  }
+  
+  const navigateWeek = (direction: "prev" | "next") => {
+    setCurrentDate((prev) => {
+      const newDate = new Date(prev)
+      newDate.setDate(prev.getDate() + (direction === "prev" ? -7 : 7))
       return newDate
     })
   }
 
-  const getDateString = (date: Date) => {
-    return date.toISOString().split("T")[0]
-  }
-
+  const getDateString = (date: Date) => date.toISOString().split("T")[0]
   const getAppointmentsForDate = (date: Date) => {
     const dateString = getDateString(date)
     return appointments.filter(apt => apt.date === dateString)
   }
 
-  const hasAppointments = (date: Date) => {
-    return getAppointmentsForDate(date).length > 0
-  }
-
   const handleDateClick = (date: Date) => {
-    if (isPastDate(date)) return
+    if (isPastDate(date) && !isToday(date)) return
     
     const dateString = getDateString(date)
     setSelectedDate(dateString)
@@ -264,13 +270,11 @@ export function MidwifeCalendar({
     const slotId = `${selectedDate}-${slotData.time}`
     
     if (editingSlot) {
-      // Edytuj istniejący slot
       midwifeDataManager.updateAvailabilitySlot(midwifeId, slotId, {
         isAvailable: slotData.isAvailable ?? editingSlot.isAvailable,
         maxBookings: slotData.maxBookings ?? editingSlot.maxBookings
       })
     } else {
-      // Dodaj nowy slot
       const newSlot: MidwifeAvailability = {
         id: slotId,
         midwifeId,
@@ -282,7 +286,6 @@ export function MidwifeCalendar({
       }
       midwifeDataManager.setAvailability(midwifeId, [newSlot])
     }
-
     setShowAvailabilityDialog(false)
     setEditingSlot(null)
   }
@@ -296,33 +299,17 @@ export function MidwifeCalendar({
   }
 
   const handleSaveMultiDayAvailability = (
-    startDate: string,
-    endDate: string,
-    selectedDays: number[],
-    timeSlots: string[],
-    isAvailable: boolean,
-    maxBookings: number
+    startDate: string, endDate: string, selectedDays: number[], 
+    timeSlots: string[], isAvailable: boolean, maxBookings: number
   ) => {
     const start = new Date(startDate)
     const end = new Date(endDate)
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return
     
-    // Sprawdź czy daty są poprawne
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      console.error("Nieprawidłowe daty:", startDate, endDate)
-      return
-    }
-    
-    // Użyj menedżera danych do ustawienia dostępności
     midwifeDataManager.setMultiDayAvailability(
-      midwifeId,
-      startDate,
-      endDate,
-      selectedDays,
-      timeSlots,
-      isAvailable,
-      maxBookings
+      midwifeId, startDate, endDate, selectedDays, 
+      timeSlots, isAvailable, maxBookings
     )
-
     setShowMultiDayDialog(false)
   }
 
@@ -336,6 +323,16 @@ export function MidwifeCalendar({
     }
   }
 
+  const getStatusBorderColor = (status: string) => {
+    switch (status) {
+      case 'confirmed': return 'border-green-400'
+      case 'pending': return 'border-yellow-400'
+      case 'completed': return 'border-blue-400'
+      case 'cancelled': return 'border-red-400'
+      default: return 'border-gray-400'
+    }
+  }
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'confirmed': return <CheckCircle className="w-4 h-4" />
@@ -346,11 +343,97 @@ export function MidwifeCalendar({
     }
   }
 
-  const days = getDaysInMonth(currentDate)
+  const renderMonthView = () => {
+    const days = getDaysInMonth(currentDate)
+    return (
+      <>
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {DAYS_OF_WEEK.map((day) => (
+            <div key={day} className="p-1 sm:p-2 text-center text-xs sm:text-sm font-medium text-gray-500">
+              {day}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((date, index) => {
+            if (!date) return <div key={index} className="p-1 sm:p-2 h-10 sm:h-20" />
+            
+            const appointments = getAppointmentsForDate(date)
+            const hasAppts = appointments.length > 0
+            const isPast = isPastDate(date) && !isToday(date)
+            const isCurrentMonth = date.getMonth() === currentDate.getMonth()
+            const isTodayDate = isToday(date)
+
+            return (
+              <button
+                key={index}
+                onClick={() => handleDateClick(date)}
+                disabled={isPast}
+                className={`p-1 sm:p-2 h-12 sm:h-20 flex flex-col items-center justify-center border rounded-lg transition-all duration-200 text-center ${
+                  isPast ? "opacity-50 cursor-not-allowed bg-gray-50" : "cursor-pointer hover:bg-pink-50 hover:border-pink-300"
+                } ${isTodayDate && isCurrentMonth ? "bg-pink-100 border-pink-300" : "border-gray-200"} ${
+                  !isCurrentMonth ? "opacity-40" : ""
+                }`}
+              >
+                <div className={`text-xs sm:text-sm font-medium ${isTodayDate && isCurrentMonth ? "text-pink-600" : "text-gray-900"}`}>
+                  {date.getDate()}
+                </div>
+                {hasAppts && isCurrentMonth && !isPast && (
+                  <div className="text-[10px] sm:text-xs text-blue-600 mt-1 truncate px-1">
+                    {appointments.length}{isMobile ? '' : (appointments.length > 1 ? ' wizyt' : ' wizyta')}
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </>
+    )
+  }
+  
+  const renderWeekView = () => {
+    const days = getDaysInWeek(currentDate)
+    return (
+      <div className="space-y-4">
+        {days.map((date) => {
+          const appointmentsOnDay = getAppointmentsForDate(date).sort((a, b) => parseTime(a.time) - parseTime(b.time));
+          const isPast = isPastDate(date) && !isToday(date)
+          const isTodayDate = isToday(date)
+          
+          return (
+            <div key={date.toISOString()} className={`p-3 rounded-lg border ${isTodayDate ? 'bg-pink-50 border-pink-200' : 'bg-white'}`}>
+              <h3 
+                onClick={() => handleDateClick(date)}
+                className={`font-semibold mb-2 flex items-center justify-between ${isPast ? 'text-gray-400' : 'cursor-pointer'}`}
+              >
+                <span>{formatDate(date, { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                {!isPast && <Plus className="w-4 h-4 text-gray-500" />}
+              </h3>
+              {appointmentsOnDay.length > 0 ? (
+                <div className="space-y-2">
+                  {appointmentsOnDay.map(apt => (
+                     <div key={apt.id} className={`p-2 border-l-4 rounded-r-md ${getStatusBorderColor(apt.status)} ${getStatusColor(apt.status)}`}>
+                       <div className="flex items-center justify-between text-xs sm:text-sm">
+                         <div className="font-medium">{apt.time} - {getEndTime(apt.time, apt.type)}</div>
+                         <div>{serviceTypes[apt.type]?.description || '30 min'}</div>
+                       </div>
+                       <div className="text-sm font-medium mt-1">{apt.patient}</div>
+                       <div className="text-xs text-gray-600">{apt.type}</div>
+                     </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">{isPast ? 'Dzień minął' : 'Brak wizyt'}</p>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 w-full">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold">Kalendarz wizyt</h2>
@@ -358,234 +441,105 @@ export function MidwifeCalendar({
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Button 
-            className="bg-pink-500 hover:bg-pink-600"
-            onClick={handleAddAvailability}
-            disabled={!selectedDate}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Dodaj dostępność
-          </Button>
-          <Button 
             variant="outline"
             className="border-pink-500 text-pink-600 hover:bg-pink-50"
             onClick={handleOpenMultiDayDialog}
           >
             <CalendarRange className="w-4 h-4 mr-2" />
-            Kilka dni naraz
+            Ustaw dostępność
           </Button>
         </div>
       </div>
 
-      {/* Calendar */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <Calendar className="w-5 h-5" />
-              {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
+              {viewMode === 'month' ? 
+                `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}` :
+                `Tydzień: ${formatDate(getDaysInWeek(currentDate)[0])} - ${formatDate(getDaysInWeek(currentDate)[6])}`
+              }
             </CardTitle>
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" onClick={() => navigateMonth("prev")}>
+            <div className="flex items-center gap-2">
+              {isMobile && (
+                <Select value={viewMode} onValueChange={(val) => setViewMode(val as 'month' | 'week')}>
+                  <SelectTrigger className="w-[120px] h-9">
+                    <SelectValue placeholder="Widok" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="month">Miesiąc</SelectItem>
+                    <SelectItem value="week">Tydzień</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => viewMode === 'month' ? navigateMonth("prev") : navigateWeek('prev')}>
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigateMonth("next")}>
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => viewMode === 'month' ? navigateMonth("next") : navigateWeek('next')}>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent className={isMobile ? "p-3" : "p-6"}>
-          {/* Calendar Grid - Mobile Optimized */}
-          <div className={`grid grid-cols-7 gap-0.5 ${isMobile ? "mb-2" : "mb-4"}`}>
-            {DAYS.map((day) => (
-              <div key={day} className={`${isMobile ? "p-1" : "p-2"} text-center ${isMobile ? "text-xs" : "text-sm"} font-medium text-gray-500`}>
-                {isMobile ? day.substring(0, 2) : day}
-              </div>
-            ))}
-          </div>
-
-          <div className={`grid grid-cols-7 gap-0.5 ${isMobile ? "gap-1" : ""}`}>
-            {days.map((date, index) => {
-              if (!date) {
-                return <div key={index} className={`${isMobile ? "p-1 h-12" : "p-2 h-20"}`} />
-              }
-
-              const appointments = getAppointmentsForDate(date)
-              const hasAppts = hasAppointments(date)
-              const isPast = isPastDate(date)
-              const isCurrentMonth = date.getMonth() === currentDate.getMonth()
-              const isTodayDate = isToday(date)
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleDateClick(date)}
-                  disabled={isPast}
-                  className={`${isMobile ? "p-1 h-12" : "p-2 h-20"} border rounded-lg transition-all duration-200 ${
-                    isPast
-                      ? "opacity-50 cursor-not-allowed bg-gray-50"
-                      : "cursor-pointer hover:bg-pink-50 hover:border-pink-300 hover:shadow-sm"
-                  } ${isTodayDate && isCurrentMonth ? "bg-pink-100 border-pink-300" : "border-gray-200"} ${
-                    !isCurrentMonth ? "opacity-30" : ""
-                  }`}
-                >
-                  <div
-                    className={`${isMobile ? "text-xs" : "text-sm"} font-medium ${
-                      isTodayDate && isCurrentMonth ? "text-pink-600" : "text-gray-900"
-                    }`}
-                  >
-                    {date.getDate()}
-                  </div>
-                  {hasAppts && isCurrentMonth && !isPast && (
-                    <div className={`${isMobile ? "text-[10px]" : "text-xs"} text-blue-600 ${isMobile ? "mt-0.5" : "mt-1"}`}>
-                      {isMobile ? appointments.length : `${appointments.length} wizyt`}
-                    </div>
-                  )}
-                  {isCurrentMonth && !isPast && !hasAppts && isMobile && (
-                    <div className="text-[10px] text-gray-500 mt-0.5">
-                      •
-                    </div>
-                  )}
-                  {isCurrentMonth && !isPast && !hasAppts && !isMobile && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      Wolne
-                    </div>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="mt-4 flex items-center gap-4 text-xs text-gray-500">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-pink-100 border border-pink-300 rounded"></div>
-              <span>Dziś</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
-              <span>Wizyty</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-gray-50 border border-gray-200 rounded"></div>
-              <span>Wolne</span>
+        <CardContent className="p-3 sm:p-6">
+          {(isMobile ? (viewMode === 'week' ? renderWeekView() : renderMonthView()) : renderMonthView())}
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-pink-100 border border-pink-300 rounded"></div><span>Dziś</span></div>
+              <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div><span>Wizyty</span></div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Appointments Dialog */}
       <Dialog open={showAppointmentsDialog} onOpenChange={setShowAppointmentsDialog}>
-        <DialogContent className={`${isMobile ? "max-w-[95vw] h-[90vh]" : "max-w-4xl max-h-[90vh]"} overflow-y-auto`}>
-          <DialogHeader>
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl h-[90vh] flex flex-col p-0">
+          <DialogHeader className="p-4 border-b">
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              {selectedDate && formatDate(new Date(selectedDate), {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
+              {selectedDate && formatDate(new Date(selectedDate), { weekday: "long", day: "numeric", month: "long" })}
             </DialogTitle>
           </DialogHeader>
-
-          <div className="space-y-6">
-            {/* Wizyty */}
+          <div className="overflow-y-auto flex-1 p-4 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
                   <User className="w-5 h-5" />
                   Wizyty ({selectedDate ? getAppointmentsForDate(new Date(selectedDate)).length : 0})
                 </CardTitle>
               </CardHeader>
-              <CardContent className={isMobile ? "p-3" : "p-6"}>
-                <div className={isMobile ? "space-y-2" : "space-y-3"}>
-                  {selectedDate && getAppointmentsForDate(new Date(selectedDate)).map((appointment) => (
-                    <div key={appointment.id} className={`${isMobile ? "p-3" : "p-4"} border rounded-lg`}>
-                      <div className={`flex ${isMobile ? "flex-col gap-2" : "items-center justify-between"} mb-2`}>
-                        <div className="flex items-center gap-2">
-                          <Badge className={`${getStatusColor(appointment.status)} ${isMobile ? "text-xs" : ""}`}>
-                            {getStatusIcon(appointment.status)}
-                            <span className={isMobile ? "ml-1" : ""}>
-                              {appointment.status === 'confirmed' && (isMobile ? 'Potw.' : 'Potwierdzona')}
-                              {appointment.status === 'pending' && (isMobile ? 'Oczek.' : 'Oczekująca')}
-                              {appointment.status === 'completed' && (isMobile ? 'Zak.' : 'Zakończona')}
-                              {appointment.status === 'cancelled' && (isMobile ? 'Anul.' : 'Anulowana')}
-                            </span>
-                          </Badge>
-                        </div>
-                        <div className={isMobile ? "text-left" : "text-right"}>
-                          <p className={`font-medium ${isMobile ? "text-sm" : ""}`}>{appointment.time} - {getEndTime(appointment.time, appointment.type)}</p>
-                          <p className="text-xs text-gray-500">
-                            {serviceTypes[appointment.type]?.description || '30 min'}
-                          </p>
-                          {appointment.week && (
-                            <p className="text-xs text-gray-500">{appointment.week}</p>
-                          )}
+              <CardContent className="p-3">
+                <div className="space-y-3">
+                  {selectedDate && getAppointmentsForDate(new Date(selectedDate)).length > 0 ? getAppointmentsForDate(new Date(selectedDate)).map((appointment) => (
+                    <div key={appointment.id} className="p-3 border rounded-lg">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                        <Badge className={`${getStatusColor(appointment.status)} text-xs`}>
+                          {getStatusIcon(appointment.status)}
+                          <span className="ml-1.5">{appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}</span>
+                        </Badge>
+                        <div className="text-left sm:text-right text-xs">
+                          <p className="font-semibold text-sm">{appointment.time} - {getEndTime(appointment.time, appointment.type)}</p>
+                          <p className="text-gray-500">{serviceTypes[appointment.type]?.description || '30 min'}</p>
                         </div>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <div>
-                          <p className="font-semibold">{appointment.patient}</p>
-                          <p className="text-sm text-gray-600">{appointment.type}</p>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          {appointment.isOnline ? (
-                            <div className="flex items-center gap-1">
-                              <Video className="w-4 h-4" />
-                              <span>Online</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              <span>{appointment.location || 'Gabinet'}</span>
-                            </div>
-                          )}
-                          {appointment.phone && (
-                            <div className="flex items-center gap-1">
-                              <User className="w-4 h-4" />
-                              <span>{appointment.phone}</span>
-                            </div>
-                          )}
-                        </div>
-
+                      <div className="space-y-1">
+                        <p className="font-semibold">{appointment.patient}</p>
+                        <p className="text-sm text-gray-600">{appointment.type}</p>
                         {onAppointmentAction && (
-                          <div className={`flex ${isMobile ? "flex-col" : "flex-row"} gap-2 mt-3`}>
+                          <div className="flex flex-wrap gap-2 pt-2">
                             {appointment.status === 'pending' && (
                               <>
-                                <Button 
-                                  size={isMobile ? "sm" : "sm"}
-                                  onClick={() => onAppointmentAction(appointment.id, 'confirm')}
-                                  className={`bg-green-500 hover:bg-green-600 ${isMobile ? "w-full text-xs" : ""}`}
-                                >
-                                  {isMobile ? "Potwierdź" : "Potwierdź"}
-                                </Button>
-                                <Button 
-                                  size={isMobile ? "sm" : "sm"}
-                                  variant="outline"
-                                  onClick={() => onAppointmentAction(appointment.id, 'cancel')}
-                                  className={`text-red-600 border-red-300 hover:bg-red-50 ${isMobile ? "w-full text-xs" : ""}`}
-                                >
-                                  {isMobile ? "Anuluj" : "Anuluj"}
-                                </Button>
+                                <Button size="sm" onClick={() => onAppointmentAction(appointment.id, 'confirm')} className="bg-green-500 hover:bg-green-600 h-8">Potwierdź</Button>
+                                <Button size="sm" variant="outline" onClick={() => onAppointmentAction(appointment.id, 'cancel')} className="h-8">Anuluj</Button>
                               </>
                             )}
-                            <Button 
-                              size={isMobile ? "sm" : "sm"}
-                              variant="outline"
-                              onClick={() => onAppointmentAction(appointment.id, 'reschedule')}
-                              className={isMobile ? "w-full text-xs" : ""}
-                            >
-                              {isMobile ? "Przełóż" : "Przełóż"}
-                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => onAppointmentAction(appointment.id, 'reschedule')} className="h-8">Przełóż</Button>
                           </div>
                         )}
                       </div>
                     </div>
-                  ))}
-                  
-                  {selectedDate && getAppointmentsForDate(new Date(selectedDate)).length === 0 && (
+                  )) : (
                     <div className="text-center py-8 text-gray-500">
                       <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
                       <p>Brak wizyt w tym dniu</p>
@@ -594,59 +548,33 @@ export function MidwifeCalendar({
                 </div>
               </CardContent>
             </Card>
-
-            {/* Dostępność */}
             <Card>
-              <CardHeader className={isMobile ? "p-3" : ""}>
-                <div className={`flex ${isMobile ? "flex-col gap-2" : "items-center justify-between"}`}>
-                  <CardTitle className={`flex items-center gap-2 ${isMobile ? "text-base" : ""}`}>
+              <CardHeader>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
                     <Clock className="w-5 h-5" />
                     Dostępność
                   </CardTitle>
-                  <Button size={isMobile ? "sm" : "sm"} onClick={handleAddAvailability} className={isMobile ? "w-full text-xs" : ""}>
+                  <Button size="sm" onClick={handleAddAvailability}>
                     <Plus className="w-4 h-4 mr-2" />
-                    {isMobile ? "Dodaj dostępność" : "Dodaj"}
+                    Dodaj
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className={isMobile ? "p-3" : ""}>
-                <div className={isMobile ? "space-y-2" : "space-y-3"}>
+              <CardContent className="p-3">
+                <div className="space-y-2">
                   {availabilitySlots.map((slot) => (
-                    <div key={slot.id} className={`flex ${isMobile ? "flex-col gap-2" : "items-center justify-between"} ${isMobile ? "p-2" : "p-3"} border rounded-lg`}>
-                      <div className={`flex items-center ${isMobile ? "justify-between" : "gap-3"}`}>
-                        <div className="text-center">
-                          <p className={`font-medium ${isMobile ? "text-sm" : ""}`}>{slot.time}</p>
-                          <p className="text-xs text-gray-500">
-                            {slot.currentBookings}/{slot.maxBookings} rezerwacji
-                          </p>
-                        </div>
-                        <Badge variant={slot.isAvailable ? "default" : "secondary"} className={isMobile ? "text-xs" : ""}>
-                          {slot.isAvailable ? (isMobile ? "Dostępne" : "Dostępne") : (isMobile ? "Niedostępne" : "Niedostępne")}
-                        </Badge>
+                    <div key={slot.id} className="flex items-center justify-between gap-2 p-2 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Badge variant={slot.isAvailable ? "default" : "secondary"}>{slot.isAvailable ? "Dostępne" : "Niedostępne"}</Badge>
+                        <div className="font-medium">{slot.time}</div>
                       </div>
-                      <div className={`flex gap-2 ${isMobile ? "w-full" : ""}`}>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditAvailability(slot)}
-                          className={isMobile ? "flex-1 text-xs" : ""}
-                        >
-                          <Edit className="w-4 h-4" />
-                          {isMobile && <span className="ml-1">Edytuj</span>}
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleDeleteAvailability(slot.id)}
-                          className={`text-red-600 border-red-300 hover:bg-red-50 ${isMobile ? "flex-1 text-xs" : ""}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          {isMobile && <span className="ml-1">Usuń</span>}
-                        </Button>
+                      <div className="flex gap-2">
+                        <Button size="icon" variant="ghost" onClick={() => handleEditAvailability(slot)} className="h-8 w-8"><Edit className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => handleDeleteAvailability(slot.id)} className="h-8 w-8 text-red-500"><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   ))}
-                  
                   {availabilitySlots.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
                       <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -659,367 +587,133 @@ export function MidwifeCalendar({
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Availability Dialog */}
+      
       <Dialog open={showAvailabilityDialog} onOpenChange={setShowAvailabilityDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editingSlot ? "Edytuj dostępność" : "Dodaj dostępność"}
-            </DialogTitle>
+            <DialogTitle>{editingSlot ? "Edytuj dostępność" : "Dodaj dostępność"}</DialogTitle>
           </DialogHeader>
-          
-          <AvailabilityForm
-            slot={editingSlot}
-            onSave={handleSaveAvailability}
-            onCancel={() => setShowAvailabilityDialog(false)}
-          />
+          <AvailabilityForm slot={editingSlot} onSave={handleSaveAvailability} onCancel={() => setShowAvailabilityDialog(false)} />
         </DialogContent>
       </Dialog>
-
-      {/* Multi-Day Availability Dialog */}
+      
       <Dialog open={showMultiDayDialog} onOpenChange={setShowMultiDayDialog}>
-        <DialogContent className={`${isMobile ? "max-w-[95vw] h-[90vh]" : "max-w-2xl max-h-[90vh]"} overflow-hidden`}>
-          <DialogHeader className={isMobile ? "p-3" : ""}>
-            <DialogTitle className={isMobile ? "text-base" : ""}>Ustaw dostępność dla kilku dni</DialogTitle>
-          </DialogHeader>
-          
-          <div className={`overflow-y-auto ${isMobile ? "max-h-[calc(90vh-100px)] px-3" : "max-h-[calc(90vh-120px)] pr-2"}`}>
-            <MultiDayAvailabilityForm
-              onSave={handleSaveMultiDayAvailability}
-              onCancel={() => setShowMultiDayDialog(false)}
-              isMobile={isMobile}
-            />
-          </div>
+        <DialogContent className="max-w-[95vw] md:max-w-2xl">
+          <DialogHeader><DialogTitle>Ustaw dostępność dla wielu dni</DialogTitle></DialogHeader>
+          <MultiDayAvailabilityForm onSave={handleSaveMultiDayAvailability} onCancel={() => setShowMultiDayDialog(false)} />
         </DialogContent>
       </Dialog>
     </div>
   )
 }
 
-interface AvailabilityFormProps {
-  slot: AvailabilitySlot | null
-  onSave: (data: Partial<AvailabilitySlot>) => void
-  onCancel: () => void
-}
-
-function AvailabilityForm({ slot, onSave, onCancel }: AvailabilityFormProps) {
+function AvailabilityForm({ slot, onSave, onCancel }: { slot: AvailabilitySlot | null, onSave: (data: Partial<AvailabilitySlot>) => void, onCancel: () => void }) {
   const [time, setTime] = useState(slot?.time || "")
   const [isAvailable, setIsAvailable] = useState(slot?.isAvailable ?? true)
   const [maxBookings, setMaxBookings] = useState(slot?.maxBookings?.toString() || "1")
-
   const timeSlots = generateTimeSlots(9, 17, 30)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSave({
-      time,
-      isAvailable,
-      maxBookings: parseInt(maxBookings)
-    })
+    onSave({ time, isAvailable, maxBookings: parseInt(maxBookings) })
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
+      <div className="space-y-1">
         <Label htmlFor="time">Godzina</Label>
-        <Select value={time} onValueChange={setTime}>
-          <SelectTrigger>
-            <SelectValue placeholder="Wybierz godzinę" />
-          </SelectTrigger>
-          <SelectContent>
-            {timeSlots.map((slot) => (
-              <SelectItem key={slot} value={slot}>
-                {slot}
-              </SelectItem>
-            ))}
-          </SelectContent>
+        <Select value={time} onValueChange={setTime} required>
+          <SelectTrigger><SelectValue placeholder="Wybierz godzinę" /></SelectTrigger>
+          <SelectContent>{timeSlots.map((slot) => <SelectItem key={slot} value={slot}>{slot}</SelectItem>)}</SelectContent>
         </Select>
       </div>
-
-      <div>
+      <div className="space-y-1">
         <Label htmlFor="isAvailable">Status</Label>
         <Select value={isAvailable.toString()} onValueChange={(value) => setIsAvailable(value === "true")}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="true">Dostępne</SelectItem>
             <SelectItem value="false">Niedostępne</SelectItem>
           </SelectContent>
         </Select>
       </div>
-
-      <div>
-        <Label htmlFor="maxBookings">Maksymalna liczba rezerwacji</Label>
-        <Input
-          id="maxBookings"
-          type="number"
-          min="1"
-          max="10"
-          value={maxBookings}
-          onChange={(e) => setMaxBookings(e.target.value)}
-        />
+      <div className="space-y-1">
+        <Label htmlFor="maxBookings">Maks. rezerwacji</Label>
+        <Input id="maxBookings" type="number" min="1" max="10" value={maxBookings} onChange={(e) => setMaxBookings(e.target.value)} />
       </div>
-
       <div className="flex gap-3 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-          Anuluj
-        </Button>
-        <Button type="submit" className="flex-1 bg-pink-500 hover:bg-pink-600">
-          {slot ? "Zapisz" : "Dodaj"}
-        </Button>
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">Anuluj</Button>
+        <Button type="submit" className="flex-1 bg-pink-500 hover:bg-pink-600">{slot ? "Zapisz" : "Dodaj"}</Button>
       </div>
     </form>
   )
 }
 
-interface MultiDayAvailabilityFormProps {
-  onSave: (
-    startDate: string,
-    endDate: string,
-    selectedDays: number[],
-    timeSlots: string[],
-    isAvailable: boolean,
-    maxBookings: number
-  ) => void
-  onCancel: () => void
-  isMobile?: boolean
-}
-
-function MultiDayAvailabilityForm({ onSave, onCancel, isMobile = false }: MultiDayAvailabilityFormProps) {
+function MultiDayAvailabilityForm({ onSave, onCancel }: { onSave: (startDate: string, endDate: string, selectedDays: number[], timeSlots: string[], isAvailable: boolean, maxBookings: number) => void, onCancel: () => void }) {
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
-  const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4]) // Pon-Pt domyślnie
+  const [selectedDays, setSelectedDays] = useState<number[]>([0, 1, 2, 3, 4])
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([])
   const [isAvailable, setIsAvailable] = useState(true)
   const [maxBookings, setMaxBookings] = useState("1")
-
   const timeSlots = generateTimeSlots(9, 17, 30)
-  const daysOfWeek = [
-    { value: 0, label: "Poniedziałek" },
-    { value: 1, label: "Wtorek" },
-    { value: 2, label: "Środa" },
-    { value: 3, label: "Czwartek" },
-    { value: 4, label: "Piątek" },
-    { value: 5, label: "Sobota" },
-    { value: 6, label: "Niedziela" }
-  ]
+  const daysOfWeek = [{ value: 0, label: "Pon" }, { value: 1, label: "Wt" }, { value: 2, label: "Śr" }, { value: 3, label: "Czw" }, { value: 4, label: "Pt" }, { value: 5, label: "Sob" }, { value: 6, label: "Nie" }]
 
-  const handleDayToggle = (day: number) => {
-    setSelectedDays(prev => 
-      prev.includes(day) 
-        ? prev.filter(d => d !== day)
-        : [...prev, day].sort()
-    )
-  }
-
-  const handleTimeSlotToggle = (time: string) => {
-    setSelectedTimeSlots(prev => 
-      prev.includes(time)
-        ? prev.filter(t => t !== time)
-        : [...prev, time].sort()
-    )
-  }
-
-  const handleSelectAllTimeSlots = () => {
-    setSelectedTimeSlots(timeSlots)
-  }
-
-  const handleClearAllTimeSlots = () => {
-    setSelectedTimeSlots([])
-  }
+  const handleDayToggle = (day: number) => setSelectedDays(p => p.includes(day) ? p.filter(d => d !== day) : [...p, day].sort())
+  const handleTimeSlotToggle = (time: string) => setSelectedTimeSlots(p => p.includes(time) ? p.filter(t => t !== time) : [...p, time].sort())
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
     if (!startDate || !endDate || selectedDays.length === 0 || selectedTimeSlots.length === 0) {
       alert("Proszę wypełnić wszystkie wymagane pola")
       return
     }
-
-    const startDateObj = new Date(startDate)
-    const endDateObj = new Date(endDate)
-    
-    if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
-      alert("Proszę wprowadzić poprawne daty")
-      return
-    }
-    
-    if (startDateObj > endDateObj) {
-      alert("Data początkowa nie może być późniejsza niż data końcowa")
-      return
-    }
-
-    onSave(
-      startDate,
-      endDate,
-      selectedDays,
-      selectedTimeSlots,
-      isAvailable,
-      parseInt(maxBookings)
-    )
+    onSave(startDate, endDate, selectedDays, selectedTimeSlots, isAvailable, parseInt(maxBookings))
   }
 
   return (
-    <form onSubmit={handleSubmit} className={isMobile ? "space-y-3" : "space-y-4"}>
-      {/* Zakres dat */}
-      <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-3`}>
-        <div>
-          <Label htmlFor="startDate" className="text-sm">Data od</Label>
-          <Input
-            id="startDate"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            required
-            className={isMobile ? "h-10 text-sm" : "h-8 text-sm"}
-          />
-        </div>
-        <div>
-          <Label htmlFor="endDate" className="text-sm">Data do</Label>
-          <Input
-            id="endDate"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            required
-            className={isMobile ? "h-10 text-sm" : "h-8 text-sm"}
-          />
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div><Label htmlFor="startDate">Data od</Label><Input id="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required /></div>
+        <div><Label htmlFor="endDate">Data do</Label><Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} required /></div>
       </div>
-
-      {/* Dni tygodnia */}
       <div>
-        <Label className="text-sm font-medium">Dni tygodnia</Label>
-        <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-1 mt-1`}>
+        <Label>Dni tygodnia</Label>
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 mt-2">
           {daysOfWeek.map((day) => (
-            <div key={day.value} className="flex items-center space-x-2">
-              <Checkbox
-                id={`day-${day.value}`}
-                checked={selectedDays.includes(day.value)}
-                onCheckedChange={() => handleDayToggle(day.value)}
-                className={isMobile ? "w-4 h-4" : "w-3 h-3"}
-              />
-              <Label 
-                htmlFor={`day-${day.value}`}
-                className={`${isMobile ? "text-sm" : "text-xs"} font-normal cursor-pointer`}
-              >
-                {day.label}
-              </Label>
-            </div>
+            <Button key={day.value} type="button" variant={selectedDays.includes(day.value) ? "default" : "outline"} onClick={() => handleDayToggle(day.value)}>{day.label}</Button>
           ))}
         </div>
       </div>
-
-      {/* Godziny */}
       <div>
-        <div className={`flex ${isMobile ? "flex-col gap-2" : "items-center justify-between"} mb-1`}>
-          <Label className="text-sm font-medium">Godziny dostępności</Label>
-          <div className={`flex gap-1 ${isMobile ? "w-full" : ""}`}>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleSelectAllTimeSlots}
-              className={`text-xs px-2 py-1 ${isMobile ? "h-8 flex-1" : "h-7"}`}
-            >
-              Wszystkie
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleClearAllTimeSlots}
-              className={`text-xs px-2 py-1 ${isMobile ? "h-8 flex-1" : "h-7"}`}
-            >
-              Wyczyść
-            </Button>
-          </div>
+        <Label>Godziny</Label>
+        <div className="flex gap-2 my-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => setSelectedTimeSlots(timeSlots)}>Wszystkie</Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setSelectedTimeSlots([])}>Wyczyść</Button>
         </div>
-        <div className={`grid ${isMobile ? "grid-cols-3" : "grid-cols-4 sm:grid-cols-6 md:grid-cols-8"} gap-1 ${isMobile ? "max-h-40" : "max-h-32"} overflow-y-auto border rounded-md p-2`}>
+        <div className="grid grid-cols-4 gap-2 border rounded-md p-2 max-h-48 overflow-y-auto">
           {timeSlots.map((time) => (
-            <div key={time} className="flex items-center space-x-1">
-              <Checkbox
-                id={`time-${time}`}
-                checked={selectedTimeSlots.includes(time)}
-                onCheckedChange={() => handleTimeSlotToggle(time)}
-                className={isMobile ? "w-4 h-4" : "w-3 h-3"}
-              />
-              <Label 
-                htmlFor={`time-${time}`}
-                className={`${isMobile ? "text-xs" : "text-xs"} cursor-pointer text-gray-700`}
-              >
-                {time}
-              </Label>
-            </div>
+            <div key={time} className="flex items-center gap-2"><Checkbox id={`time-${time}`} checked={selectedTimeSlots.includes(time)} onCheckedChange={() => handleTimeSlotToggle(time)} /><Label htmlFor={`time-${time}`} className="cursor-pointer">{time}</Label></div>
           ))}
         </div>
-        {selectedTimeSlots.length > 0 && (
-          <p className="text-sm text-gray-600 mt-2">
-            Wybrano {selectedTimeSlots.length} godzin
-          </p>
-        )}
       </div>
-
-      {/* Status */}
-      <div>
-        <Label htmlFor="isAvailable" className="text-sm">Status</Label>
-        <Select value={isAvailable.toString()} onValueChange={(value) => setIsAvailable(value === "true")}>
-          <SelectTrigger className={isMobile ? "h-10 text-sm" : "h-8 text-sm"}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="true">Dostępne</SelectItem>
-            <SelectItem value="false">Niedostępne</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Status</Label>
+            <Select value={isAvailable.toString()} onValueChange={(v) => setIsAvailable(v === "true")}>
+              <SelectTrigger><SelectValue/></SelectTrigger>
+              <SelectContent><SelectItem value="true">Dostępne</SelectItem><SelectItem value="false">Niedostępne</SelectItem></SelectContent>
+            </Select>
+          </div>
+          <div>
+              <Label>Maks. rezerwacji</Label>
+              <Input type="number" min="1" value={maxBookings} onChange={e => setMaxBookings(e.target.value)} />
+          </div>
       </div>
-
-      {/* Maksymalna liczba rezerwacji */}
-      <div>
-        <Label htmlFor="maxBookingsMulti" className="text-sm">Maksymalna liczba rezerwacji na slot</Label>
-        <Input
-          id="maxBookingsMulti"
-          type="number"
-          min="1"
-          max="10"
-          value={maxBookings}
-          onChange={(e) => setMaxBookings(e.target.value)}
-          className={isMobile ? "h-10 text-sm" : "h-8 text-sm"}
-        />
-      </div>
-
-      {/* Podsumowanie */}
-      {startDate && endDate && selectedDays.length > 0 && selectedTimeSlots.length > 0 && (
-        <div className="bg-gray-50 p-3 rounded-md">
-          <h4 className="font-medium mb-1 text-sm">Podsumowanie:</h4>
-          <ul className="text-xs space-y-0.5">
-            <li>• Okres: {startDate && endDate ? `${formatDate(new Date(startDate))} - ${formatDate(new Date(endDate))}` : "Nie wybrano dat"}</li>
-            <li>• Dni: {selectedDays.map(d => daysOfWeek[d].label).join(", ")}</li>
-            <li>• Godziny: {selectedTimeSlots.length} slotów czasowych</li>
-            <li>• Status: {isAvailable ? "Dostępne" : "Niedostępne"}</li>
-          </ul>
-        </div>
-      )}
-
-      {/* Przyciski */}
-      <div className={`flex gap-3 ${isMobile ? "pt-3" : "pt-2"} sticky bottom-0 bg-white`}>
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onCancel} 
-          className={`flex-1 ${isMobile ? "h-10 text-sm" : ""}`}
-        >
-          Anuluj
-        </Button>
-        <Button 
-          type="submit" 
-          className={`flex-1 bg-pink-500 hover:bg-pink-600 ${isMobile ? "h-10 text-sm" : ""}`}
-        >
-          {isMobile ? "Ustaw" : "Ustaw dostępność"}
-        </Button>
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>Anuluj</Button>
+        <Button type="submit">Ustaw dostępność</Button>
       </div>
     </form>
   )
-} 
+}

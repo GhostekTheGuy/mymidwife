@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useRef, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -29,12 +30,15 @@ import { SlidersHorizontal } from "lucide-react"
 import { formatDate, formatDateISO, formatRelativeTime, addDays } from "@/lib/date-utils"
 
 export default function MidwifeDemoPage() {
-  const [activeTab, setActiveTab] = useState("overview")
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || "overview")
   const [showProfileEdit, setShowProfileEdit] = useState(false)
   const [showPatientList, setShowPatientList] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [showEducationalMaterials, setShowEducationalMaterials] = useState(false)
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
+    searchParams.get('conversationId')
+  )
   const [customArticles, setCustomArticles] = useState<any[]>([])
   const [selectedPatient, setSelectedPatient] = useState<any | null>(null)
   const [showPatientDetails, setShowPatientDetails] = useState(false)
@@ -949,147 +953,15 @@ export default function MidwifeDemoPage() {
     )
   }
 
-  const renderCalendar = () => {
-    // Pobierz oczekujące wizyty
-    const pendingAppointments = allAppointments.filter(apt => apt.status === 'pending')
-    const upcomingAppointments = allAppointments.filter(apt => 
-      apt.status === 'confirmed' && new Date(apt.date) >= new Date()
-    ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
-    return (
-      <div className="space-y-6">
-        <MidwifeCalendar 
-          appointments={allAppointments}
-          midwifeId="2"
-          onAppointmentAction={handleAppointmentAction}
-        />
-        
-        {/* Oczekujące wizyty do potwierdzenia */}
-        {pendingAppointments.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-500" />
-                Oczekujące wizyty do potwierdzenia ({pendingAppointments.length})
-              </CardTitle>
-              <CardDescription>
-                Nowe rezerwacje wymagające Twojej akceptacji
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {pendingAppointments.map((appointment) => (
-                  <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg bg-amber-50 border-amber-200">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src="/images/postpartum-care.png" />
-                          <AvatarFallback>
-                            {appointment.patient.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h4 className="font-semibold">{appointment.patient}</h4>
-                          <p className="text-sm text-gray-600">{appointment.type}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <CalendarDays className="w-4 h-4" />
-                          <span>{formatDate(new Date(appointment.date))}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{appointment.time}</span>
-                        </div>
-                        {appointment.week && (
-                          <div className="flex items-center gap-1">
-                            <Baby className="w-4 h-4" />
-                            <span>{appointment.week}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleAppointmentAction(appointment.id, 'confirm')}
-                        className="bg-green-500 hover:bg-green-600"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Potwierdź
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleAppointmentAction(appointment.id, 'cancel')}
-                        className="text-red-600 border-red-300 hover:bg-red-50"
-                      >
-                        <XCircle className="w-4 h-4 mr-1" />
-                        Odrzuć
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleAppointmentAction(appointment.id, 'reschedule')}
-                      >
-                        <Clock className="w-4 h-4 mr-1" />
-                        Przełóż
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Nadchodzące potwierdzone wizyty */}
-        {upcomingAppointments.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                Nadchodzące wizyty ({upcomingAppointments.length})
-              </CardTitle>
-              <CardDescription>
-                Potwierdzone wizyty w najbliższym czasie
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {upcomingAppointments.slice(0, 5).map((appointment) => (
-                  <div key={appointment.id} className="flex items-center justify-between p-3 border rounded-lg bg-green-50 border-green-200">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src="/images/nurse-checklist.jpg" />
-                        <AvatarFallback className="text-xs">
-                          {appointment.patient.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h5 className="font-medium text-sm">{appointment.patient}</h5>
-                        <p className="text-xs text-gray-600">{appointment.type}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{formatDate(new Date(appointment.date))}</p>
-                      <p className="text-xs text-gray-600">{appointment.time}</p>
-                    </div>
-                  </div>
-                ))}
-                {upcomingAppointments.length > 5 && (
-                  <p className="text-center text-sm text-gray-500 pt-2">
-                    ...i {upcomingAppointments.length - 5} więcej
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    )
-  }
+  const renderCalendar = () => (
+    <div className="space-y-6">
+      <MidwifeCalendar
+        appointments={allAppointments}
+        midwifeId="2"
+        onAppointmentAction={handleAppointmentAction}
+      />
+    </div>
+  )
 
   const renderMessages = () => (
     <div className="space-y-4 sm:space-y-6">
@@ -2352,4 +2224,3 @@ function ServiceEditForm({ service, onSave, onCancel }: {
     </form>
   )
 }
-

@@ -11,12 +11,17 @@ export function DemoBanner() {
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    // Show modal after a short delay when component mounts
-    const timer = setTimeout(() => {
-      setIsOpen(true)
-    }, 1000)
+    // Check if user has already seen the demo banner
+    const hasSeenDemoBanner = localStorage.getItem('hasSeenDemoBanner')
+    
+    if (!hasSeenDemoBanner) {
+      // Show modal after a short delay when component mounts
+      const timer = setTimeout(() => {
+        setIsOpen(true)
+      }, 1000)
 
-    return () => clearTimeout(timer)
+      return () => clearTimeout(timer)
+    }
   }, [])
 
   const handleResetDemoData = () => {
@@ -25,7 +30,12 @@ export function DemoBanner() {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open)
+      if (!open) {
+        localStorage.setItem('hasSeenDemoBanner', 'true')
+      }
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-pink-700">
@@ -49,7 +59,10 @@ export function DemoBanner() {
               <RotateCcw className="w-4 h-4 mr-2" />
               Resetuj dane demo
             </Button>
-            <Button onClick={() => setIsOpen(false)} className="bg-pink-600 hover:bg-pink-700 text-white">
+            <Button onClick={() => {
+              setIsOpen(false)
+              localStorage.setItem('hasSeenDemoBanner', 'true')
+            }} className="bg-pink-600 hover:bg-pink-700 text-white">
               Rozumiem
             </Button>
           </div>
