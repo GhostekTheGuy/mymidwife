@@ -1744,7 +1744,7 @@ function MidwifeDashboardContent() {
 
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-40">
-        <div className="grid grid-cols-5 gap-1">
+        <div className="grid grid-cols-6 gap-1">
           {navigationItems.map((item) => {
             const IconComponent = item.icon
             const isActive = activeTab === item.id
