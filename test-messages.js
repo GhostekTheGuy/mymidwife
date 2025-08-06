@@ -69,4 +69,4 @@ console.log('1. Wyczyść dane demo: localStorage.clear()');
 console.log('2. Odśwież stronę');
 console.log('3. Sprawdź czy wiadomości wyświetlają się poprawnie');
 
-console.log('\n=== KONIEC TESTU ==='); 
+console.log('\n=== KONIEC TESTU ===');
